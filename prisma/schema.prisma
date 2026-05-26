@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Status {
+  PENDING
+  VERIFIED
+  FAILED
+}
+
+model User {
+  id          String         @id @default(cuid())
+  name        String
+  email       String         @unique
+  githubToken String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  claims      ResumeClaim[]
+}
+
+model ResumeClaim {
+  id             String   @id @default(uuid())
+  userId         String
+  bulletText     String
+  githubRepo     String
+  filePath       String
+  status         Status   @default(PENDING)
+  analysisResult Json?
+  createdAt      DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
