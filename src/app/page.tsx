@@ -26,6 +26,7 @@ import {
   TestTube2,
   Target,
   Crosshair,
+  Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -185,6 +186,12 @@ export default function DevVerifyDashboard() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [isSeeding, setIsSeeding] = useState(false);
 
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [newBulletText, setNewBulletText] = useState("");
+  const [newGithubRepo, setNewGithubRepo] = useState("");
+  const [newFilePath, setNewFilePath] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const activeClaim = claims.find((c) => c.id === activeClaimId) || null;
 
   const verificationProgress = useMemo(() => {
@@ -231,6 +238,43 @@ export default function DevVerifyDashboard() {
       if (data.claim) setClaims((prev) => prev.map((c) => (c.id === claimId ? data.claim : c)));
     } catch (err) { console.error("Error verifying claim:", err); }
     finally { setIsVerifying(false); }
+  };
+
+  const handleCreateClaim = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !newBulletText || !newGithubRepo || !newFilePath) return;
+
+    setIsSubmitting(true);
+    try {
+      const res = await fetch("/api/claims/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user.id,
+          bulletText: newBulletText,
+          githubRepo: newGithubRepo,
+          filePath: newFilePath,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.claim) {
+          setClaims((prev) => [data.claim, ...prev]);
+          setActiveClaimId(data.claim.id);
+          setIsAddOpen(false);
+          setNewBulletText("");
+          setNewGithubRepo("");
+          setNewFilePath("");
+        }
+      } else {
+        console.error("Failed to add claim");
+      }
+    } catch (err) {
+      console.error("Error creating claim:", err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const verifiedCount = claims.filter((c) => c.status === "VERIFIED").length;
@@ -304,6 +348,15 @@ export default function DevVerifyDashboard() {
               variant="ghost"
               size="sm"
               className="text-blue-300/50 hover:text-cyan-400 hover:bg-[#0a142c]/60 gap-1.5 text-[10px] h-7"
+              onClick={() => setIsAddOpen(true)}
+            >
+              <Plus className="h-3 w-3" />
+              Add Claim
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-blue-300/50 hover:text-cyan-400 hover:bg-[#0a142c]/60 gap-1.5 text-[10px] h-7"
               onClick={seedAndLoad}
               disabled={isSeeding}
             >
@@ -319,7 +372,7 @@ export default function DevVerifyDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
 
           {/* ═══════════════ LEFT COLUMN ═══════════════ */}
-          <div className="lg:col-span-4 xl:col-span-3 flex flex-col gap-3">
+          <div className="lg:col-span-4 xl:col-span-3 flex flex-col gap-3 lg:h-[calc(100vh-100px)] lg:overflow-y-auto pr-1">
 
             {/* ── Profile Card ── */}
             <div className={`${GLASS} ${GLASS_INNER} rounded-xl p-5 relative overflow-hidden`}>
@@ -426,7 +479,7 @@ export default function DevVerifyDashboard() {
           </div>
 
           {/* ═══════════════ RIGHT COLUMN ═══════════════ */}
-          <div className="lg:col-span-8 xl:col-span-9">
+          <div className="lg:col-span-8 xl:col-span-9 lg:h-[calc(100vh-100px)] lg:overflow-y-auto">
             <AnimatePresence mode="wait">
               {!activeClaim ? (
                 /* ── Empty State — Target Mesh Glass Pane ── */
@@ -680,6 +733,106 @@ export default function DevVerifyDashboard() {
           <span className="text-[10px] text-blue-300/15 font-mono">Next.js + Prisma</span>
         </div>
       </footer>
+
+      {/* ── Add Claim Modal ── */}
+      <AnimatePresence>
+        {isAddOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsAddOpen(false)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+
+            {/* Modal Box */}
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ type: "spring", duration: 0.3 }}
+              className={`w-full max-w-md ${GLASS} ${GLASS_INNER} rounded-2xl p-6 relative overflow-hidden shadow-2xl z-10`}
+            >
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent" />
+
+              <h3 className="text-white font-semibold text-base mb-4 flex items-center gap-2">
+                <Plus className="h-4 w-4 text-cyan-400" />
+                Add New Resume Claim
+              </h3>
+
+              <form onSubmit={handleCreateClaim} className="space-y-4">
+                <div>
+                  <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-mono mb-1">
+                    Evidence Bullet Text
+                  </label>
+                  <textarea
+                    required
+                    value={newBulletText}
+                    onChange={(e) => setNewBulletText(e.target.value)}
+                    placeholder="e.g. Optimized database query performance by 40% using composite indexing and raw SQL queries"
+                    rows={3}
+                    className="w-full rounded-lg border border-blue-500/20 bg-[#040a18]/80 px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400/50"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-mono mb-1">
+                      GitHub Repository
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={newGithubRepo}
+                      onChange={(e) => setNewGithubRepo(e.target.value)}
+                      placeholder="e.g. user/repo"
+                      className="w-full rounded-lg border border-blue-500/20 bg-[#040a18]/80 px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400/50"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-mono mb-1">
+                      Target File Path
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={newFilePath}
+                      onChange={(e) => setNewFilePath(e.target.value)}
+                      placeholder="e.g. src/index.ts"
+                      className="w-full rounded-lg border border-blue-500/20 bg-[#040a18]/80 px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400/50"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setIsAddOpen(false)}
+                    className="text-slate-400 hover:text-white hover:bg-white/5 text-[11px] h-8 px-3"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 shadow-[0_0_15px_rgba(59,130,246,0.2)] text-[11px] h-8 px-4 font-medium rounded-lg flex items-center gap-1.5"
+                  >
+                    {isSubmitting ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <Plus className="h-3 w-3" />
+                    )}
+                    Add Claim
+                  </Button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
