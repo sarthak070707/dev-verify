@@ -218,7 +218,11 @@ export async function POST(request: NextRequest) {
 
     const claim = await db.resumeClaim.findUnique({
       where: { id: claimId },
-      include: { user: true },
+      select: {
+        id: true,
+        status: true,
+        filePath: true,
+      },
     });
 
     if (!claim) {
@@ -263,7 +267,23 @@ export async function POST(request: NextRequest) {
         status: "VERIFIED",
         analysisResult,
       },
-      include: { user: true },
+      select: {
+        id: true,
+        userId: true,
+        bulletText: true,
+        githubRepo: true,
+        filePath: true,
+        status: true,
+        analysisResult: true,
+        createdAt: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
     });
 
     return NextResponse.json({ claim: updatedClaim });

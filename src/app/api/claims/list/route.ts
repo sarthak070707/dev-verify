@@ -16,7 +16,23 @@ export async function GET(request: NextRequest) {
     const claims = await db.resumeClaim.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" },
-      include: { user: true },
+      select: {
+        id: true,
+        userId: true,
+        bulletText: true,
+        githubRepo: true,
+        filePath: true,
+        status: true,
+        analysisResult: true,
+        createdAt: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
     });
 
     return NextResponse.json({ claims });

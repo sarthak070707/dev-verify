@@ -14,6 +14,11 @@ export async function POST() {
         email: "sarthak@devverify.io",
         githubToken: "ghp_demo_token_x9k2m",
       },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+      },
     });
 
     // Create sample resume claims

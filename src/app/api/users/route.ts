@@ -15,9 +15,24 @@ export async function GET(request: NextRequest) {
 
     const user = await db.user.findUnique({
       where: { id: userId },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        createdAt: true,
+        updatedAt: true,
         claims: {
           orderBy: { createdAt: "desc" },
+          select: {
+            id: true,
+            userId: true,
+            bulletText: true,
+            githubRepo: true,
+            filePath: true,
+            status: true,
+            analysisResult: true,
+            createdAt: true,
+          },
         },
       },
     });

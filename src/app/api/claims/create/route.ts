@@ -13,7 +13,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const userExists = await db.user.findUnique({ where: { id: userId } });
+    const userExists = await db.user.findUnique({
+      where: { id: userId },
+      select: { id: true },
+    });
     if (!userExists) {
       return NextResponse.json(
         { error: "User not found" },
@@ -28,6 +31,16 @@ export async function POST(request: NextRequest) {
         githubRepo,
         filePath,
         status: "PENDING",
+      },
+      select: {
+        id: true,
+        userId: true,
+        bulletText: true,
+        githubRepo: true,
+        filePath: true,
+        status: true,
+        analysisResult: true,
+        createdAt: true,
       },
     });
 

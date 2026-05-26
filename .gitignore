@@ -52,3 +52,14 @@ prompt
 server.log
 # Skills directory
 /skills/
+
+# local OS system files
+Thumbs.db
+desktop.ini
+
+# raw design assets and temporary scratchpads
+*.psd
+*.fig
+/scratch/
+/temp/
+*.tmp
