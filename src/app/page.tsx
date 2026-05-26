@@ -368,14 +368,14 @@ export default function DevVerifyDashboard() {
       </header>
 
       {/* ── Main ── */}
-      <main className="relative z-10 flex-1 max-w-[1680px] w-full mx-auto p-4 sm:p-6 lg:p-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <main className="relative z-10 flex-1 max-w-[1680px] w-full mx-auto p-4 sm:p-6 lg:p-8 overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-full">
 
           {/* ═══════════════ LEFT COLUMN ═══════════════ */}
-          <div className="lg:col-span-4 xl:col-span-3 flex flex-col gap-3 lg:h-[calc(100vh-100px)] lg:overflow-y-auto pr-1">
+          <div className="lg:col-span-4 xl:col-span-3 flex flex-col gap-3 lg:h-[calc(100vh-7rem)]">
 
             {/* ── Profile Card ── */}
-            <div className={`${GLASS} ${GLASS_INNER} rounded-xl p-5 relative overflow-hidden`}>
+            <div className={`flex-none ${GLASS} ${GLASS_INNER} rounded-xl p-5 relative overflow-hidden`}>
               {/* Top gradient accent line */}
               <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent" />
 
@@ -415,7 +415,7 @@ export default function DevVerifyDashboard() {
             </div>
 
             {/* ── Claims Label ── */}
-            <div className="flex items-center justify-between px-1">
+            <div className="flex-none flex items-center justify-between px-1">
               <div className="flex items-center gap-2">
                 <Layers className="h-3.5 w-3.5 text-blue-400/50" />
                 <span className="text-[11px] font-medium text-blue-300/50 tracking-wide">Resume Claims</span>
@@ -424,7 +424,7 @@ export default function DevVerifyDashboard() {
             </div>
 
             {/* ── Claims List ── */}
-            <ScrollArea className="flex-1 max-h-[calc(100vh-18rem)] lg:max-h-[calc(100vh-18rem)]">
+            <ScrollArea className="flex-grow min-h-0">
               <div className="flex flex-col gap-2 pr-0.5">
                 <AnimatePresence mode="popLayout">
                   {claims.map((claim) => {
@@ -479,7 +479,7 @@ export default function DevVerifyDashboard() {
           </div>
 
           {/* ═══════════════ RIGHT COLUMN ═══════════════ */}
-          <div className="lg:col-span-8 xl:col-span-9 lg:h-[calc(100vh-100px)] lg:overflow-y-auto">
+          <div className="lg:col-span-8 xl:col-span-9 lg:h-[calc(100vh-7rem)] lg:overflow-y-auto">
             <AnimatePresence mode="wait">
               {!activeClaim ? (
                 /* ── Empty State — Target Mesh Glass Pane ── */
