@@ -441,16 +441,14 @@ export default function DevVerifyDashboard() {
                       >
                         <button
                           onClick={() => setActiveClaimId(claim.id)}
-                          className={`w-full text-left rounded-xl border p-3.5 transition-all duration-150 ${
-                            isSelected
-                              ? "bg-gradient-to-r from-blue-500/10 to-transparent border-blue-400/30 border-l-4 border-l-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.08)]"
-                              : "bg-[#0a142c]/30 border-blue-500/10 hover:bg-[#0a142c]/50 hover:border-blue-500/15"
-                          }`}
+                          className={`w-full text-left rounded-xl border p-3.5 transition-all duration-150 ${isSelected
+                            ? "bg-gradient-to-r from-blue-500/10 to-transparent border-blue-400/30 border-l-4 border-l-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.08)]"
+                            : "bg-[#0a142c]/30 border-blue-500/10 hover:bg-[#0a142c]/50 hover:border-blue-500/15"
+                            }`}
                         >
                           <div className="flex items-start gap-2.5">
-                            <div className={`mt-0.5 h-7 w-7 rounded-lg flex items-center justify-center shrink-0 ${
-                              isSelected ? "bg-blue-500/20 shadow-[0_0_10px_rgba(59,130,246,0.15)]" : "bg-blue-500/5"
-                            }`}>
+                            <div className={`mt-0.5 h-7 w-7 rounded-lg flex items-center justify-center shrink-0 ${isSelected ? "bg-blue-500/20 shadow-[0_0_10px_rgba(59,130,246,0.15)]" : "bg-blue-500/5"
+                              }`}>
                               <FileCode2 className={`h-3.5 w-3.5 ${isSelected ? "text-blue-400" : "text-blue-300/30"}`} />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -638,11 +636,12 @@ export default function DevVerifyDashboard() {
                   </div>
 
                   {/* ─── Box D: Code Terminal ─── */}
-                  <div className={`md:col-span-12 ${GLASS} rounded-xl overflow-hidden relative`}>
+                  {/* Added flex flex-col flex-grow to ensure this fills the right column */}
+                  <div className={`md:col-span-12 ${GLASS} rounded-xl overflow-hidden relative flex flex-col flex-grow`}>
                     <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/25 to-transparent" />
 
-                    {/* Terminal header */}
-                    <div className="flex items-center justify-between px-4 h-10 bg-[#0a142c]/80 border-b border-blue-500/15">
+                    {/* Terminal header (added flex-none) */}
+                    <div className="flex items-center justify-between px-4 h-10 bg-[#0a142c]/80 border-b border-blue-500/15 flex-none">
                       <div className="flex items-center gap-3">
                         <div className="flex items-center gap-1.5">
                           <div className="h-[7px] w-[7px] rounded-full bg-red-400/70 shadow-[0_0_4px_rgba(248,113,113,0.3)]" />
@@ -659,10 +658,11 @@ export default function DevVerifyDashboard() {
                       </div>
                     </div>
 
-                    {/* Code */}
+                    {/* Code Area (added flex-grow min-h-0) */}
                     {activeClaim.analysisResult ? (
-                      <div className="bg-[#040a18] relative">
-                        <ScrollArea className="max-h-[calc(100vh-30rem)] min-h-[260px]">
+                      <div className="bg-[#040a18] relative flex-grow min-h-0">
+                        {/* Changed max-h to h-full so it takes the height of the parent */}
+                        <ScrollArea className="h-full">
                           <AnimatePresence mode="wait">
                             <motion.div key={activeClaim.id + "-code"} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.1 }}>
                               <SyntaxHighlighter
@@ -681,7 +681,7 @@ export default function DevVerifyDashboard() {
                         </ScrollArea>
                       </div>
                     ) : (
-                      <div className="bg-[#040a18] flex flex-col items-center justify-center py-14 px-8">
+                      <div className="bg-[#040a18] flex flex-col items-center justify-center py-14 px-8 flex-grow">
                         <div className="h-12 w-12 rounded-lg bg-[#0a142c]/60 border border-blue-500/15 flex items-center justify-center mb-4 shadow-[0_0_15px_rgba(59,130,246,0.08)]">
                           <Terminal className="h-6 w-6 text-cyan-400/40" />
                         </div>
@@ -700,8 +700,8 @@ export default function DevVerifyDashboard() {
                       </div>
                     )}
 
-                    {/* Terminal footer */}
-                    <div className="flex items-center justify-between px-4 h-7 bg-[#0a142c]/80 border-t border-blue-500/10">
+                    {/* Terminal footer (added flex-none) */}
+                    <div className="flex items-center justify-between px-4 h-7 bg-[#0a142c]/80 border-t border-blue-500/10 flex-none">
                       <div className="flex items-center gap-3 text-[9px] font-mono text-blue-300/25">
                         {activeClaim.analysisResult ? (
                           <><span>{activeClaim.analysisResult.language}</span><span>UTF-8</span><span>{activeClaim.analysisResult.linesOfCode}</span></>
@@ -714,125 +714,125 @@ export default function DevVerifyDashboard() {
                       </span>
                     </div>
                   </div>
+
+                  {/* ── Footer ── */}
+                  <footer className="relative z-10 border-t border-blue-500/10 bg-[#040a18]/80 backdrop-blur-xl mt-auto">
+                    <div className="max-w-[1680px] mx-auto px-4 sm:px-6 lg:px-8 h-10 flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-[10px] text-blue-300/25">
+                        <ShieldCheck className="h-3 w-3" />
+                        <span>DevVerify</span>
+                        <span className="text-blue-300/15">·</span>
+                        <span>Code Evidence Platform</span>
+                      </div>
+                      <span className="text-[10px] text-blue-300/15 font-mono">Next.js + Prisma</span>
+                    </div>
+                  </footer>
+
+                  {/* ── Add Claim Modal ── */}
+                  <AnimatePresence>
+                    {isAddOpen && (
+                      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        {/* Backdrop */}
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          onClick={() => setIsAddOpen(false)}
+                          className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                        />
+
+                        {/* Modal Box */}
+                        <motion.div
+                          initial={{ scale: 0.95, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          exit={{ scale: 0.95, opacity: 0 }}
+                          transition={{ type: "spring", duration: 0.3 }}
+                          className={`w-full max-w-md ${GLASS} ${GLASS_INNER} rounded-2xl p-6 relative overflow-hidden shadow-2xl z-10`}
+                        >
+                          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent" />
+
+                          <h3 className="text-white font-semibold text-base mb-4 flex items-center gap-2">
+                            <Plus className="h-4 w-4 text-cyan-400" />
+                            Add New Resume Claim
+                          </h3>
+
+                          <form onSubmit={handleCreateClaim} className="space-y-4">
+                            <div>
+                              <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-mono mb-1">
+                                Evidence Bullet Text
+                              </label>
+                              <textarea
+                                required
+                                value={newBulletText}
+                                onChange={(e) => setNewBulletText(e.target.value)}
+                                placeholder="e.g. Optimized database query performance by 40% using composite indexing and raw SQL queries"
+                                rows={3}
+                                className="w-full rounded-lg border border-blue-500/20 bg-[#040a18]/80 px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400/50"
+                              />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-mono mb-1">
+                                  GitHub Repository
+                                </label>
+                                <input
+                                  type="text"
+                                  required
+                                  value={newGithubRepo}
+                                  onChange={(e) => setNewGithubRepo(e.target.value)}
+                                  placeholder="e.g. user/repo"
+                                  className="w-full rounded-lg border border-blue-500/20 bg-[#040a18]/80 px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400/50"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-mono mb-1">
+                                  Target File Path
+                                </label>
+                                <input
+                                  type="text"
+                                  required
+                                  value={newFilePath}
+                                  onChange={(e) => setNewFilePath(e.target.value)}
+                                  placeholder="e.g. src/index.ts"
+                                  className="w-full rounded-lg border border-blue-500/20 bg-[#040a18]/80 px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400/50"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="flex justify-end gap-2 pt-2">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                onClick={() => setIsAddOpen(false)}
+                                className="text-slate-400 hover:text-white hover:bg-white/5 text-[11px] h-8 px-3"
+                              >
+                                Cancel
+                              </Button>
+                              <Button
+                                type="submit"
+                                disabled={isSubmitting}
+                                className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 shadow-[0_0_15px_rgba(59,130,246,0.2)] text-[11px] h-8 px-4 font-medium rounded-lg flex items-center gap-1.5"
+                              >
+                                {isSubmitting ? (
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                ) : (
+                                  <Plus className="h-3 w-3" />
+                                )}
+                                Add Claim
+                              </Button>
+                            </div>
+                          </form>
+                        </motion.div>
+                      </div>
+                    )}
+                  </AnimatePresence>
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
         </div>
       </main>
-
-      {/* ── Footer ── */}
-      <footer className="relative z-10 border-t border-blue-500/10 bg-[#040a18]/80 backdrop-blur-xl mt-auto">
-        <div className="max-w-[1680px] mx-auto px-4 sm:px-6 lg:px-8 h-10 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-[10px] text-blue-300/25">
-            <ShieldCheck className="h-3 w-3" />
-            <span>DevVerify</span>
-            <span className="text-blue-300/15">·</span>
-            <span>Code Evidence Platform</span>
-          </div>
-          <span className="text-[10px] text-blue-300/15 font-mono">Next.js + Prisma</span>
-        </div>
-      </footer>
-
-      {/* ── Add Claim Modal ── */}
-      <AnimatePresence>
-        {isAddOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsAddOpen(false)}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            />
-
-            {/* Modal Box */}
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              transition={{ type: "spring", duration: 0.3 }}
-              className={`w-full max-w-md ${GLASS} ${GLASS_INNER} rounded-2xl p-6 relative overflow-hidden shadow-2xl z-10`}
-            >
-              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent" />
-
-              <h3 className="text-white font-semibold text-base mb-4 flex items-center gap-2">
-                <Plus className="h-4 w-4 text-cyan-400" />
-                Add New Resume Claim
-              </h3>
-
-              <form onSubmit={handleCreateClaim} className="space-y-4">
-                <div>
-                  <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-mono mb-1">
-                    Evidence Bullet Text
-                  </label>
-                  <textarea
-                    required
-                    value={newBulletText}
-                    onChange={(e) => setNewBulletText(e.target.value)}
-                    placeholder="e.g. Optimized database query performance by 40% using composite indexing and raw SQL queries"
-                    rows={3}
-                    className="w-full rounded-lg border border-blue-500/20 bg-[#040a18]/80 px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400/50"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-mono mb-1">
-                      GitHub Repository
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={newGithubRepo}
-                      onChange={(e) => setNewGithubRepo(e.target.value)}
-                      placeholder="e.g. user/repo"
-                      className="w-full rounded-lg border border-blue-500/20 bg-[#040a18]/80 px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400/50"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-mono mb-1">
-                      Target File Path
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={newFilePath}
-                      onChange={(e) => setNewFilePath(e.target.value)}
-                      placeholder="e.g. src/index.ts"
-                      className="w-full rounded-lg border border-blue-500/20 bg-[#040a18]/80 px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400/50"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-2 pt-2">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => setIsAddOpen(false)}
-                    className="text-slate-400 hover:text-white hover:bg-white/5 text-[11px] h-8 px-3"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 shadow-[0_0_15px_rgba(59,130,246,0.2)] text-[11px] h-8 px-4 font-medium rounded-lg flex items-center gap-1.5"
-                  >
-                    {isSubmitting ? (
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                    ) : (
-                      <Plus className="h-3 w-3" />
-                    )}
-                    Add Claim
-                  </Button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
