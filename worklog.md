@@ -31,3 +31,32 @@ Stage Summary:
 - 5 API endpoints created (seed, claims/create, claims/list, verify/process, users)
 - Premium dark-themed dashboard with IDE-like code viewer
 - All features from PRD implemented with production-ready code
+
+---
+Task ID: 2
+Agent: Main Agent
+Task: Redesign page.tsx with Linear-style Bento Grid aesthetic
+
+Work Log:
+- Completely rewrote src/app/page.tsx with high-fidelity Linear-style Bento Grid design
+- Changed base canvas to absolute `bg-[#030712]` with card containers using `bg-[#090d16]` and `border-slate-900`
+- Created custom CircularProgress component (SVG ring) with glow filter, animated percentage, and color transitions
+- Created MeshGlow SVG component with radial gradients, grid lines, and accent dots for indigo mesh glow effect
+- Created SpringText component wrapping AnimatePresence for smooth spring-animated text transitions
+- Restructured right column into Bento Grid matrix:
+  - Box A (12-col wide): Claim details section with MeshGlow indigo background, status/repo/path badges, spring-animated bullet text
+  - Box B (4-col): Circular verification progress visualization (0-100%) with color-coded ring and glow
+  - Box C (8-col): 6-column micro-metrics parameter block (Lines, Complexity, Language, Functions, Imports, Test Coverage) with spring-animated values
+  - Box D (12-col full): Code terminal with strict `font-mono text-[11px]` typography, gradient overlay, SyntaxHighlighter, terminal chrome
+- All state transitions use Framer Motion spring animations (stiffness: 300-400, damping: 28-30)
+- Staggered entrance animations on Bento boxes with incremental delays
+- Compact, precise Linear-style spacing and typography throughout
+- Lint passes clean, dev server rebuilds successfully
+
+Stage Summary:
+- Complete UI redesign with Linear-style Bento Grid aesthetic
+- New custom components: CircularProgress, MeshGlow, SpringText
+- Right column structured as 4-box Bento Grid (A: claim details, B: circular progress, C: micro-metrics, D: code terminal)
+- All transitions use spring animations via Framer Motion AnimatePresence
+- Base canvas `bg-[#030712]`, cards `bg-[#090d16]` with `border-slate-900`
+- Project is ready for final review
