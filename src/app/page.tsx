@@ -345,24 +345,15 @@ export default function DevVerifyDashboard() {
               <span className="text-[10px] text-cyan-400/80 font-mono tabular-nums">{verifiedCount}/{claims.length}</span>
             </div>
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
-              className="text-blue-300/50 hover:text-cyan-400 hover:bg-[#0a142c]/60 gap-1.5 text-[10px] h-7"
-              onClick={() => setIsAddOpen(true)}
+              className="border-cyan-500/30 bg-cyan-500/5 text-cyan-400 hover:bg-cyan-500/20 hover:border-cyan-500/60 shadow-[0_0_10px_rgba(6,182,212,0.1)] transition-all duration-300 gap-1.5"
+              onClick={seedAndLoad}
+              disabled={isSeeding}
             >
-              <Plus className="h-3 w-3" />
+              <Plus className="h-3.5 w-3.5" />
+              Add Claim
             </Button>
-              {/* Add Claim Button */}
-          <Button
-            variant="outline"
-            size="sm"
-            className="border-cyan-500/30 bg-cyan-500/5 text-cyan-400 hover:bg-cyan-500/20 hover:border-cyan-500/60 shadow-[0_0_10px_rgba(6,182,212,0.1)] transition-all duration-300 gap-1.5"
-            onClick={seedAndLoad}
-            disabled={isSeeding}
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Add Claim
-          </Button>
 
           {/* Reset Button */}
           <Button
