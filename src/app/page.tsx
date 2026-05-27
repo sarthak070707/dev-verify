@@ -353,19 +353,20 @@ export default function DevVerifyDashboard() {
               <Plus className="h-3 w-3" />
               Add Claim
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-blue-300/50 hover:text-cyan-400 hover:bg-[#0a142c]/60 gap-1.5 text-[10px] h-7"
-              onClick={seedAndLoad}
-              disabled={isSeeding}
-            >
-              {isSeeding ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
-              Reset
-            </Button>
-          </div>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-blue-300/50 hover:text-cyan-400 hover:bg-[#0a142c]/60 gap-1.5 text-[10px] h-7"
+            onClick={seedAndLoad}
+            disabled={isSeeding}
+          >
+            {isSeeding ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+            Reset
+          </Button>
         </div>
-      </header>
+      </div>
+    </header>
 
       {/* ── Main ── */}
       <main className="relative z-10 flex-1 max-w-[1680px] w-full mx-auto p-4 sm:p-6 lg:p-8 overflow-hidden">
@@ -596,17 +597,17 @@ export default function DevVerifyDashboard() {
                     {activeClaim.analysisResult ? (
                       <div className="grid grid-cols-3 sm:grid-cols-6 gap-2.5 mt-3">
                         {[
-                          { label: "Lines", value: activeClaim.analysisResult.linesOfCode, icon: Hash },
-                          { label: "Complexity", value: activeClaim.analysisResult.complexity, icon: Cpu },
-                          { label: "Language", value: activeClaim.analysisResult.language, icon: Braces },
-                          { label: "Functions", value: String(activeClaim.analysisResult.metrics.functions), icon: Terminal },
-                          { label: "Imports", value: String(activeClaim.analysisResult.metrics.imports), icon: GitCommitHorizontal },
-                          { label: "Coverage", value: activeClaim.analysisResult.metrics.errorHandling > 2 ? "87%" : activeClaim.analysisResult.metrics.errorHandling > 0 ? "62%" : "24%", icon: TestTube2 },
+                          { label: "Lines", value: activeClaim.analysisResult.linesOfCode, icon: Hash, size: "text-[10px]" },
+                          { label: "Complexity", value: activeClaim.analysisResult.complexity, icon: Cpu, size: "text-[10px]" },
+                          { label: "Language", value: activeClaim.analysisResult.language, icon: Braces, size: "text-[10px]" },
+                          { label: "Workflow Modules", value: String(activeClaim.analysisResult.metrics.functions), icon: Terminal, size: "text-[8px]" },
+                          { label: "Imports", value: String(activeClaim.analysisResult.metrics.imports), icon: GitCommitHorizontal, size: "text-[8px]" },
+                          { label: "Coverage", value: activeClaim.analysisResult.metrics.errorHandling > 2 ? "87%" : activeClaim.analysisResult.metrics.errorHandling > 0 ? "62%" : "24%", icon: TestTube2, size: "text-[8px]" } ,
                         ].map((m) => (
                           <div key={m.label} className="flex flex-col gap-1.5 px-2.5 py-2.5 rounded-lg bg-[#040a18]/60 border border-blue-500/10">
                             <div className="flex items-center gap-1">
                               <m.icon className="h-2.5 w-2.5 text-cyan-400/40" />
-                              <span className="text-[9px] uppercase tracking-wider text-slate-500">{m.label}</span>
+                              <span className={` ${m.size} uppercase tracking-wider text-slate-500`}>{m.label}</span>
                             </div>
                             <AnimatePresence mode="wait">
                               <motion.span
@@ -625,12 +626,12 @@ export default function DevVerifyDashboard() {
                       </div>
                     ) : (
                       <div className="grid grid-cols-3 sm:grid-cols-6 gap-2.5 mt-3">
-                        {["Lines", "Complexity", "Language", "Functions", "Imports", "Coverage"].map((label) => (
-                          <div key={label} className="flex flex-col gap-1.5 px-2.5 py-2.5 rounded-lg bg-[#040a18]/60 border border-blue-500/10">
-                            <span className="text-[9px] uppercase tracking-wider text-slate-700">{label}</span>
-                            <div className="h-4 w-10 rounded bg-blue-500/5 animate-pulse" />
-                          </div>
-                        ))}
+{["Lines", "Complexity", "Language", "Workflow Modules", "System Integrations", "Reliability Score"].map((label) => (
+  <div key={label} className="flex flex-col gap-1.5 px-2.5 py-2.5 rounded-lg bg-[#040a18]/60 border border-blue-500/10">
+    <span className="text-[9px] uppercase tracking-wider text-slate-700">{label}</span>
+    <div className="h-4 w-10 rounded bg-blue-500/5 animate-pulse" />
+  </div>
+))}
                       </div>
                     )}
                   </div>
