@@ -108,32 +108,26 @@ function NeonRing({ value, size = 110, strokeWidth = 4 }: { value: number; size?
 function TargetMesh() {
   return (
     <div className="relative w-40 h-40 flex items-center justify-center">
-      {/* Outer pulsing ring */}
       <motion.div
         className="absolute w-40 h-40 rounded-full border border-cyan-500/20"
         animate={{ scale: [1, 1.08, 1], opacity: [0.3, 0.6, 0.3] }}
         transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
       />
-      {/* Mid ring */}
       <motion.div
         className="absolute w-28 h-28 rounded-full border border-blue-400/25"
         animate={{ scale: [1, 1.05, 1], opacity: [0.4, 0.7, 0.4] }}
         transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
       />
-      {/* Inner ring */}
       <motion.div
         className="absolute w-16 h-16 rounded-full border border-indigo-400/30"
         animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0.9, 0.5] }}
         transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.6 }}
       />
-      {/* Core glow dot */}
       <div className="relative w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center">
         <div className="w-3 h-3 rounded-full bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.6)]" />
       </div>
-      {/* Crosshair lines */}
       <div className="absolute w-px h-full bg-gradient-to-b from-transparent via-cyan-500/15 to-transparent" />
       <div className="absolute h-px w-full bg-gradient-to-r from-transparent via-cyan-500/15 to-transparent" />
-      {/* Corner brackets */}
       <svg className="absolute inset-0 w-full h-full" viewBox="0 0 160 160">
         <path d="M 20 8 L 8 8 L 8 20" fill="none" stroke="rgba(34,211,238,0.3)" strokeWidth="1.5" />
         <path d="M 140 8 L 152 8 L 152 20" fill="none" stroke="rgba(34,211,238,0.3)" strokeWidth="1.5" />
@@ -344,31 +338,31 @@ export default function DevVerifyDashboard() {
               <div className={`h-1.5 w-1.5 rounded-full ${verifiedCount > 0 ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.5)]" : "bg-slate-600"}`} />
               <span className="text-[10px] text-cyan-400/80 font-mono tabular-nums">{verifiedCount}/{claims.length}</span>
             </div>
+            {/* Add Claim Button */}
             <Button
               variant="outline"
               size="sm"
-              className="border-cyan-500/30 bg-cyan-500/5 text-cyan-400 hover:bg-cyan-500/20 hover:border-cyan-500/60 shadow-[0_0_10px_rgba(6,182,212,0.1)] transition-all duration-300 gap-1.5"
+              className="border-cyan-500/50 bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 hover:border-cyan-500 shadow-[0_0_15px_rgba(6,182,212,0.2)] transition-all duration-300 gap-1.5 text-[10px] h-7"
+              onClick={() => setIsAddOpen(true)}
+            >
+              <Plus className="h-3 w-3" />
+              Add Claim
+            </Button>
+            {/* Reset Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-blue-500/30 bg-blue-500/5 text-blue-400 hover:bg-blue-500/20 hover:border-blue-500/60 transition-all duration-300 gap-1.5 text-[10px] h-7"
               onClick={seedAndLoad}
               disabled={isSeeding}
             >
-              <Plus className="h-3.5 w-3.5" />
-              Add Claim
+              {isSeeding ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+              Reset
             </Button>
-
-          {/* Reset Button */}
-          <Button
-            variant="outline"
-            size="sm"
-            className="border-blue-500/30 bg-blue-500/5 text-blue-400 hover:bg-blue-500/20 hover:border-blue-500/60 shadow-[0_0_10px_rgba(59,130,246,0.1)] transition-all duration-300 gap-1.5"
-            onClick={seedAndLoad}
-            disabled={isSeeding}
-          >
-            {isSeeding ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3 w-3.5" />}
-            Reset
-          </Button>
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+
       {/* ── Main ── */}
       <main className="relative z-10 flex-1 max-w-[1680px] w-full mx-auto p-4 sm:p-6 lg:p-8 overflow-hidden">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-full">
@@ -378,9 +372,7 @@ export default function DevVerifyDashboard() {
 
             {/* ── Profile Card ── */}
             <div className={`flex-none ${GLASS} ${GLASS_INNER} rounded-xl p-5 relative overflow-hidden`}>
-              {/* Top gradient accent line */}
               <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent" />
-
               <div className="flex items-start gap-3.5">
                 <div className="h-11 w-11 rounded-lg bg-gradient-to-br from-blue-500/25 to-cyan-500/20 border border-blue-400/20 flex items-center justify-center text-cyan-300 font-bold text-sm shrink-0 shadow-[0_0_12px_rgba(59,130,246,0.15)]">
                   {user?.name?.charAt(0) || "S"}
@@ -398,8 +390,6 @@ export default function DevVerifyDashboard() {
                   </div>
                 </div>
               </div>
-
-              {/* Metrics */}
               <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-blue-500/10">
                 <div className="text-center">
                   <div className="text-white font-semibold text-base tabular-nums">{claims.length}</div>
@@ -449,8 +439,7 @@ export default function DevVerifyDashboard() {
                             }`}
                         >
                           <div className="flex items-start gap-2.5">
-                            <div className={`mt-0.5 h-7 w-7 rounded-lg flex items-center justify-center shrink-0 ${isSelected ? "bg-blue-500/20 shadow-[0_0_10px_rgba(59,130,246,0.15)]" : "bg-blue-500/5"
-                              }`}>
+                            <div className={`mt-0.5 h-7 w-7 rounded-lg flex items-center justify-center shrink-0 ${isSelected ? "bg-blue-500/20 shadow-[0_0_10px_rgba(59,130,246,0.15)]" : "bg-blue-500/5"}`}>
                               <FileCode2 className={`h-3.5 w-3.5 ${isSelected ? "text-blue-400" : "text-blue-300/30"}`} />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -482,7 +471,7 @@ export default function DevVerifyDashboard() {
           <div className="lg:col-span-8 xl:col-span-9 lg:h-[calc(100vh-7rem)] lg:overflow-y-auto">
             <AnimatePresence mode="wait">
               {!activeClaim ? (
-                /* ── Empty State — Target Mesh Glass Pane ── */
+                /* ── Empty State ── */
                 <motion.div
                   key="empty"
                   initial={{ opacity: 0 }}
@@ -492,11 +481,8 @@ export default function DevVerifyDashboard() {
                   className={`h-full min-h-[70vh] lg:min-h-[calc(100vh-7rem)] ${GLASS} ${GLASS_INNER} rounded-xl flex flex-col items-center justify-center p-8 relative overflow-hidden`}
                 >
                   <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent" />
-                  {/* Inner ambient glow */}
                   <div className="absolute inset-0 bg-gradient-to-b from-blue-500/[0.03] via-transparent to-cyan-500/[0.03] pointer-events-none" />
-
                   <TargetMesh />
-
                   <h3 className="text-white font-semibold tracking-wide text-sm mt-6 relative">
                     Awaiting Target Selection
                   </h3>
@@ -522,7 +508,6 @@ export default function DevVerifyDashboard() {
                   <div className={`md:col-span-12 ${GLASS} ${GLASS_INNER} rounded-xl p-5 sm:p-6 relative overflow-hidden`}>
                     <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/35 to-transparent" />
                     <div className="absolute inset-0 bg-gradient-to-br from-blue-500/[0.04] to-transparent pointer-events-none" />
-
                     <div className="relative flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2.5 mb-3">
@@ -590,11 +575,10 @@ export default function DevVerifyDashboard() {
                     </div>
                   </div>
 
-                  {/* ─── Box C: 6-Column Micro-Metrics ─── */}
+                  {/* ─── Box C: Micro-Metrics ─── */}
                   <div className={`md:col-span-8 ${GLASS} ${GLASS_INNER} rounded-xl p-5 relative overflow-hidden`}>
                     <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/20 to-transparent" />
                     <span className="text-[9px] uppercase tracking-[0.15em] text-cyan-400/50">Code Metrics</span>
-
                     {activeClaim.analysisResult ? (
                       <div className="grid grid-cols-3 sm:grid-cols-6 gap-2.5 mt-3">
                         {[
@@ -603,12 +587,12 @@ export default function DevVerifyDashboard() {
                           { label: "Language", value: activeClaim.analysisResult.language, icon: Braces, size: "text-[10px]" },
                           { label: "Workflow Modules", value: String(activeClaim.analysisResult.metrics.functions), icon: Terminal, size: "text-[8px]" },
                           { label: "System Integrations", value: String(activeClaim.analysisResult.metrics.imports), icon: GitCommitHorizontal, size: "text-[8px]" },
-                          { label: "Reliability Score", value: activeClaim.analysisResult.metrics.errorHandling > 2 ? "87%" : activeClaim.analysisResult.metrics.errorHandling > 0 ? "62%" : "24%", icon: TestTube2, size: "text-[8px]" } ,
+                          { label: "Reliability Score", value: activeClaim.analysisResult.metrics.errorHandling > 2 ? "87%" : activeClaim.analysisResult.metrics.errorHandling > 0 ? "62%" : "24%", icon: TestTube2, size: "text-[8px]" },
                         ].map((m) => (
                           <div key={m.label} className="flex flex-col gap-1.5 px-2.5 py-2.5 rounded-lg bg-[#040a18]/60 border border-blue-500/10">
                             <div className="flex items-center gap-1">
                               <m.icon className="h-2.5 w-2.5 text-cyan-400/40" />
-                              <span className={` ${m.size} uppercase tracking-wider text-slate-500`}>{m.label}</span>
+                              <span className={`${m.size} uppercase tracking-wider text-slate-500`}>{m.label}</span>
                             </div>
                             <AnimatePresence mode="wait">
                               <motion.span
@@ -627,29 +611,27 @@ export default function DevVerifyDashboard() {
                       </div>
                     ) : (
                       <div className="grid grid-cols-3 sm:grid-cols-6 gap-2.5 mt-3">
-      {[
-        { label: "Lines", size: "text-[10px]" },
-        { label: "Complexity", size: "text-[10px]" },
-        { label: "Language", size: "text-[10px]" },
-        { label: "Workflow Modules", size: "text-[8px]" },
-        { label: "System Integrations", size: "text-[8px]" },
-        { label: "Reliability Score", size: "text-[8px]" }
-      ].map((m) => (
-        <div key={m.label} className="flex flex-col gap-1.5 px-2.5 py-2.5 rounded-lg bg-[#040a18]/60 border border-blue-500/10">
-          <span className={`${m.size} uppercase tracking-wider text-slate-700 whitespace-nowrap`}>{m.label}</span>
-          <div className="h-4 w-10 rounded bg-blue-500/5 animate-pulse" />
-        </div>
-      ))}
-    </div>
-  )}
-</div>
+                        {[
+                          { label: "Lines", size: "text-[10px]" },
+                          { label: "Complexity", size: "text-[10px]" },
+                          { label: "Language", size: "text-[10px]" },
+                          { label: "Workflow Modules", size: "text-[8px]" },
+                          { label: "System Integrations", size: "text-[8px]" },
+                          { label: "Reliability Score", size: "text-[8px]" },
+                        ].map((m) => (
+                          <div key={m.label} className="flex flex-col gap-1.5 px-2.5 py-2.5 rounded-lg bg-[#040a18]/60 border border-blue-500/10">
+                            <span className={`${m.size} uppercase tracking-wider text-slate-700 whitespace-nowrap`}>{m.label}</span>
+                            <div className="h-4 w-10 rounded bg-blue-500/5 animate-pulse" />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
 
                   {/* ─── Box D: Code Terminal ─── */}
-                  {/* Added flex flex-col flex-grow to ensure this fills the right column */}
                   <div className={`md:col-span-12 ${GLASS} rounded-xl overflow-hidden relative flex flex-col flex-grow`}>
                     <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/25 to-transparent" />
-
-                    {/* Terminal header (added flex-none) */}
+                    {/* Terminal header */}
                     <div className="flex items-center justify-between px-4 h-10 bg-[#0a142c]/80 border-b border-blue-500/15 flex-none">
                       <div className="flex items-center gap-3">
                         <div className="flex items-center gap-1.5">
@@ -666,11 +648,9 @@ export default function DevVerifyDashboard() {
                         <span className={`text-[9px] uppercase tracking-wider ${getStatusColor(activeClaim.status).text}`}>{activeClaim.status}</span>
                       </div>
                     </div>
-
-                    {/* Code Area (added flex-grow min-h-0) */}
+                    {/* Code Area */}
                     {activeClaim.analysisResult ? (
                       <div className="bg-[#040a18] relative flex-grow min-h-0">
-                        {/* Changed max-h to h-full so it takes the height of the parent */}
                         <ScrollArea className="h-full">
                           <AnimatePresence mode="wait">
                             <motion.div key={activeClaim.id + "-code"} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.1 }}>
@@ -708,8 +688,7 @@ export default function DevVerifyDashboard() {
                         </Button>
                       </div>
                     )}
-
-                    {/* Terminal footer (added flex-none) */}
+                    {/* Terminal footer */}
                     <div className="flex items-center justify-between px-4 h-7 bg-[#0a142c]/80 border-t border-blue-500/10 flex-none">
                       <div className="flex items-center gap-3 text-[9px] font-mono text-blue-300/25">
                         {activeClaim.analysisResult ? (
@@ -723,125 +702,120 @@ export default function DevVerifyDashboard() {
                       </span>
                     </div>
                   </div>
-
-                  {/* ── Footer ── */}
-                  <footer className="relative z-10 border-t border-blue-500/10 bg-[#040a18]/80 backdrop-blur-xl mt-auto">
-                    <div className="max-w-[1680px] mx-auto px-4 sm:px-6 lg:px-8 h-10 flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-[10px] text-blue-300/25">
-                        <ShieldCheck className="h-3 w-3" />
-                        <span>DevVerify</span>
-                        <span className="text-blue-300/15">·</span>
-                        <span>Code Evidence Platform</span>
-                      </div>
-                      <span className="text-[10px] text-blue-300/15 font-mono">Next.js + Prisma</span>
-                    </div>
-                  </footer>
-
-                  {/* ── Add Claim Modal ── */}
-                  <AnimatePresence>
-                    {isAddOpen && (
-                      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                        {/* Backdrop */}
-                        <motion.div
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          onClick={() => setIsAddOpen(false)}
-                          className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-                        />
-
-                        {/* Modal Box */}
-                        <motion.div
-                          initial={{ scale: 0.95, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          exit={{ scale: 0.95, opacity: 0 }}
-                          transition={{ type: "spring", duration: 0.3 }}
-                          className={`w-full max-w-md ${GLASS} ${GLASS_INNER} rounded-2xl p-6 relative overflow-hidden shadow-2xl z-10`}
-                        >
-                          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent" />
-
-                          <h3 className="text-white font-semibold text-base mb-4 flex items-center gap-2">
-                            <Plus className="h-4 w-4 text-cyan-400" />
-                            Add New Resume Claim
-                          </h3>
-
-                          <form onSubmit={handleCreateClaim} className="space-y-4">
-                            <div>
-                              <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-mono mb-1">
-                                Evidence Bullet Text
-                              </label>
-                              <textarea
-                                required
-                                value={newBulletText}
-                                onChange={(e) => setNewBulletText(e.target.value)}
-                                placeholder="e.g. Optimized database query performance by 40% using composite indexing and raw SQL queries"
-                                rows={3}
-                                className="w-full rounded-lg border border-blue-500/20 bg-[#040a18]/80 px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400/50"
-                              />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-3">
-                              <div>
-                                <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-mono mb-1">
-                                  GitHub Repository
-                                </label>
-                                <input
-                                  type="text"
-                                  required
-                                  value={newGithubRepo}
-                                  onChange={(e) => setNewGithubRepo(e.target.value)}
-                                  placeholder="e.g. user/repo"
-                                  className="w-full rounded-lg border border-blue-500/20 bg-[#040a18]/80 px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400/50"
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-mono mb-1">
-                                  Target File Path
-                                </label>
-                                <input
-                                  type="text"
-                                  required
-                                  value={newFilePath}
-                                  onChange={(e) => setNewFilePath(e.target.value)}
-                                  placeholder="e.g. src/index.ts"
-                                  className="w-full rounded-lg border border-blue-500/20 bg-[#040a18]/80 px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400/50"
-                                />
-                              </div>
-                            </div>
-
-                            <div className="flex justify-end gap-2 pt-2">
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                onClick={() => setIsAddOpen(false)}
-                                className="text-slate-400 hover:text-white hover:bg-white/5 text-[11px] h-8 px-3"
-                              >
-                                Cancel
-                              </Button>
-                              <Button
-                                type="submit"
-                                disabled={isSubmitting}
-                                className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 shadow-[0_0_15px_rgba(59,130,246,0.2)] text-[11px] h-8 px-4 font-medium rounded-lg flex items-center gap-1.5"
-                              >
-                                {isSubmitting ? (
-                                  <Loader2 className="h-3 w-3 animate-spin" />
-                                ) : (
-                                  <Plus className="h-3 w-3" />
-                                )}
-                                Add Claim
-                              </Button>
-                            </div>
-                          </form>
-                        </motion.div>
-                      </div>
-                    )}
-                  </AnimatePresence>
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
         </div>
       </main>
+
+      {/* ── Footer ── */}
+      <footer className="relative z-10 border-t border-blue-500/10 bg-[#040a18]/80 backdrop-blur-xl">
+        <div className="max-w-[1680px] mx-auto px-4 sm:px-6 lg:px-8 h-10 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-[10px] text-blue-300/25">
+            <ShieldCheck className="h-3 w-3" />
+            <span>DevVerify</span>
+            <span className="text-blue-300/15">·</span>
+            <span>Code Evidence Platform</span>
+          </div>
+          <span className="text-[10px] text-blue-300/15 font-mono">Next.js + Prisma</span>
+        </div>
+      </footer>
+
+      {/* ── Add Claim Modal ── */}
+      <AnimatePresence>
+        {isAddOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsAddOpen(false)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            {/* Modal Box */}
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ type: "spring", duration: 0.3 }}
+              className={`w-full max-w-md ${GLASS} ${GLASS_INNER} rounded-2xl p-6 relative overflow-hidden shadow-2xl z-10`}
+            >
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent" />
+              <h3 className="text-white font-semibold text-base mb-4 flex items-center gap-2">
+                <Plus className="h-4 w-4 text-cyan-400" />
+                Add New Resume Claim
+              </h3>
+              <form onSubmit={handleCreateClaim} className="space-y-4">
+                <div>
+                  <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-mono mb-1">
+                    Evidence Bullet Text
+                  </label>
+                  <textarea
+                    required
+                    value={newBulletText}
+                    onChange={(e) => setNewBulletText(e.target.value)}
+                    placeholder="e.g. Optimized database query performance by 40% using composite indexing and raw SQL queries"
+                    rows={3}
+                    className="w-full rounded-lg border border-blue-500/20 bg-[#040a18]/80 px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400/50"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-mono mb-1">
+                      GitHub Repository
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={newGithubRepo}
+                      onChange={(e) => setNewGithubRepo(e.target.value)}
+                      placeholder="e.g. user/repo"
+                      className="w-full rounded-lg border border-blue-500/20 bg-[#040a18]/80 px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400/50"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-mono mb-1">
+                      Target File Path
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={newFilePath}
+                      onChange={(e) => setNewFilePath(e.target.value)}
+                      placeholder="e.g. src/index.ts"
+                      className="w-full rounded-lg border border-blue-500/20 bg-[#040a18]/80 px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400/50"
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setIsAddOpen(false)}
+                    className="text-slate-400 hover:text-white hover:bg-white/5 text-[11px] h-8 px-3"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 shadow-[0_0_15px_rgba(59,130,246,0.2)] text-[11px] h-8 px-4 font-medium rounded-lg flex items-center gap-1.5"
+                  >
+                    {isSubmitting ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <Plus className="h-3 w-3" />
+                    )}
+                    Add Claim
+                  </Button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
