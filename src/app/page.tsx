@@ -351,23 +351,33 @@ export default function DevVerifyDashboard() {
               onClick={() => setIsAddOpen(true)}
             >
               <Plus className="h-3 w-3" />
-              Add Claim
             </Button>
-
+              {/* Add Claim Button */}
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
-            className="text-blue-300/50 hover:text-cyan-400 hover:bg-[#0a142c]/60 gap-1.5 text-[10px] h-7"
+            className="border-cyan-500/30 bg-cyan-500/5 text-cyan-400 hover:bg-cyan-500/20 hover:border-cyan-500/60 shadow-[0_0_10px_rgba(6,182,212,0.1)] transition-all duration-300 gap-1.5"
             onClick={seedAndLoad}
             disabled={isSeeding}
           >
-            {isSeeding ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+            <Plus className="h-3.5 w-3.5" />
+            Add Claim
+          </Button>
+
+          {/* Reset Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-blue-500/30 bg-blue-500/5 text-blue-400 hover:bg-blue-500/20 hover:border-blue-500/60 shadow-[0_0_10px_rgba(59,130,246,0.1)] transition-all duration-300 gap-1.5"
+            onClick={seedAndLoad}
+            disabled={isSeeding}
+          >
+            {isSeeding ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3 w-3.5" />}
             Reset
           </Button>
         </div>
       </div>
     </header>
-
       {/* ── Main ── */}
       <main className="relative z-10 flex-1 max-w-[1680px] w-full mx-auto p-4 sm:p-6 lg:p-8 overflow-hidden">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-full">
@@ -601,8 +611,8 @@ export default function DevVerifyDashboard() {
                           { label: "Complexity", value: activeClaim.analysisResult.complexity, icon: Cpu, size: "text-[10px]" },
                           { label: "Language", value: activeClaim.analysisResult.language, icon: Braces, size: "text-[10px]" },
                           { label: "Workflow Modules", value: String(activeClaim.analysisResult.metrics.functions), icon: Terminal, size: "text-[8px]" },
-                          { label: "Imports", value: String(activeClaim.analysisResult.metrics.imports), icon: GitCommitHorizontal, size: "text-[8px]" },
-                          { label: "Coverage", value: activeClaim.analysisResult.metrics.errorHandling > 2 ? "87%" : activeClaim.analysisResult.metrics.errorHandling > 0 ? "62%" : "24%", icon: TestTube2, size: "text-[8px]" } ,
+                          { label: "System Integrations", value: String(activeClaim.analysisResult.metrics.imports), icon: GitCommitHorizontal, size: "text-[8px]" },
+                          { label: "Reliability Score", value: activeClaim.analysisResult.metrics.errorHandling > 2 ? "87%" : activeClaim.analysisResult.metrics.errorHandling > 0 ? "62%" : "24%", icon: TestTube2, size: "text-[8px]" } ,
                         ].map((m) => (
                           <div key={m.label} className="flex flex-col gap-1.5 px-2.5 py-2.5 rounded-lg bg-[#040a18]/60 border border-blue-500/10">
                             <div className="flex items-center gap-1">
@@ -626,15 +636,22 @@ export default function DevVerifyDashboard() {
                       </div>
                     ) : (
                       <div className="grid grid-cols-3 sm:grid-cols-6 gap-2.5 mt-3">
-{["Lines", "Complexity", "Language", "Workflow Modules", "System Integrations", "Reliability Score"].map((label) => (
-  <div key={label} className="flex flex-col gap-1.5 px-2.5 py-2.5 rounded-lg bg-[#040a18]/60 border border-blue-500/10">
-    <span className="text-[9px] uppercase tracking-wider text-slate-700">{label}</span>
-    <div className="h-4 w-10 rounded bg-blue-500/5 animate-pulse" />
-  </div>
-))}
-                      </div>
-                    )}
-                  </div>
+      {[
+        { label: "Lines", size: "text-[10px]" },
+        { label: "Complexity", size: "text-[10px]" },
+        { label: "Language", size: "text-[10px]" },
+        { label: "Workflow Modules", size: "text-[8px]" },
+        { label: "System Integrations", size: "text-[8px]" },
+        { label: "Reliability Score", size: "text-[8px]" }
+      ].map((m) => (
+        <div key={m.label} className="flex flex-col gap-1.5 px-2.5 py-2.5 rounded-lg bg-[#040a18]/60 border border-blue-500/10">
+          <span className={`${m.size} uppercase tracking-wider text-slate-700 whitespace-nowrap`}>{m.label}</span>
+          <div className="h-4 w-10 rounded bg-blue-500/5 animate-pulse" />
+        </div>
+      ))}
+    </div>
+  )}
+</div>
 
                   {/* ─── Box D: Code Terminal ─── */}
                   {/* Added flex flex-col flex-grow to ensure this fills the right column */}
