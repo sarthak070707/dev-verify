@@ -6,28 +6,16 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { atomOneDark } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import {
   ShieldCheck,
-  Code2,
   GitBranch,
   FileCode2,
   Loader2,
   CheckCircle2,
-  XCircle,
-  Clock,
-  AlertCircle,
-  Terminal,
-  Cpu,
-  Braces,
   Zap,
   Github,
   ChevronRight,
-  Sparkles,
-  Hash,
-  Layers,
-  GitCommitHorizontal,
-  TestTube2,
-  Target,
-  Crosshair,
   Plus,
+  Terminal,
+  RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -69,111 +57,92 @@ interface UserData {
   claims: Claim[];
 }
 
-/* ──────────────── Glass Card Classes ──────────────── */
+/* ──────────────── Design tokens ────────────────
+   Warm "notary / audit" palette. Gold is the single signature accent,
+   used only for the brand mark, primary actions, and the authenticity stamp.
+   Everything else stays quiet: warm ink surfaces, hairline borders, mono labels. */
 
-const GLASS = "bg-[#0a142c]/60 backdrop-blur-xl border border-blue-500/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)]";
-const GLASS_INNER = "border-t border-l border-white/10";
+const PANEL = "bg-[#1A1611] border border-[#2C2519] rounded-lg";
+const LABEL = "font-mono text-[10px] uppercase tracking-[0.18em] text-[#8C8475]";
 
-/* ──────────────── Circular Progress ──────────────── */
+/* ──────────────── Progress ring (flat, no glow) ──────────────── */
 
-function NeonRing({ value, size = 110, strokeWidth = 4 }: { value: number; size?: number; strokeWidth?: number }) {
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (value / 100) * circumference;
-  const color = value >= 100 ? "#22d3ee" : value >= 60 ? "#818cf8" : value > 0 ? "#fbbf24" : "#1e3a5f";
+function ProgressRing({ value, size = 104, stroke = 5 }: { value: number; size?: number; stroke?: number }) {
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const offset = c - (value / 100) * c;
+  const color = value >= 100 ? "#74A36B" : value > 0 ? "#D9A441" : "#3A3122";
 
   return (
     <div className="relative inline-flex items-center justify-center">
       <svg width={size} height={size} className="-rotate-90">
-        <defs>
-          <filter id="neon-ring-glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="4" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#1e3a5f" strokeWidth={strokeWidth} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#241F16" strokeWidth={stroke} />
         <circle
-          cx={size / 2} cy={size / 2} r={radius} fill="none"
-          stroke={color} strokeWidth={strokeWidth} strokeLinecap="round"
-          strokeDasharray={circumference} strokeDashoffset={offset}
-          filter="url(#neon-ring-glow)"
+          cx={size / 2} cy={size / 2} r={r} fill="none"
+          stroke={color} strokeWidth={stroke} strokeLinecap="round"
+          strokeDasharray={c} strokeDashoffset={offset}
           style={{ transition: "stroke-dashoffset 0.7s cubic-bezier(0.4,0,0.2,1), stroke 0.4s ease" }}
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-white font-semibold text-xl tabular-nums">{value}%</span>
-        <span className="text-[8px] uppercase tracking-[0.2em] text-cyan-400/60">complete</span>
+        <span className="text-[#ECE6D8] font-semibold text-xl tabular-nums">{value}%</span>
+        <span className="font-mono text-[8px] uppercase tracking-[0.25em] text-[#8C8475] mt-0.5">verified</span>
       </div>
     </div>
   );
 }
 
-/* ──────────────── Target Mesh (Empty State) ──────────────── */
+/* ──────────────── Authenticity stamp (the signature element) ──────────────── */
 
-function TargetMesh() {
+function Stamp() {
   return (
-    <div className="relative w-40 h-40 flex items-center justify-center">
-      <motion.div
-        className="absolute w-40 h-40 rounded-full border border-cyan-500/20"
-        animate={{ scale: [1, 1.08, 1], opacity: [0.3, 0.6, 0.3] }}
-        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div
-        className="absolute w-28 h-28 rounded-full border border-blue-400/25"
-        animate={{ scale: [1, 1.05, 1], opacity: [0.4, 0.7, 0.4] }}
-        transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
-      />
-      <motion.div
-        className="absolute w-16 h-16 rounded-full border border-indigo-400/30"
-        animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0.9, 0.5] }}
-        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.6 }}
-      />
-      <div className="relative w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center">
-        <div className="w-3 h-3 rounded-full bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.6)]" />
-      </div>
-      <div className="absolute w-px h-full bg-gradient-to-b from-transparent via-cyan-500/15 to-transparent" />
-      <div className="absolute h-px w-full bg-gradient-to-r from-transparent via-cyan-500/15 to-transparent" />
-      <svg className="absolute inset-0 w-full h-full" viewBox="0 0 160 160">
-        <path d="M 20 8 L 8 8 L 8 20" fill="none" stroke="rgba(34,211,238,0.3)" strokeWidth="1.5" />
-        <path d="M 140 8 L 152 8 L 152 20" fill="none" stroke="rgba(34,211,238,0.3)" strokeWidth="1.5" />
-        <path d="M 8 140 L 8 152 L 20 152" fill="none" stroke="rgba(34,211,238,0.3)" strokeWidth="1.5" />
-        <path d="M 152 140 L 152 152 L 140 152" fill="none" stroke="rgba(34,211,238,0.3)" strokeWidth="1.5" />
-      </svg>
+    <div className="-rotate-[7deg] select-none border-[1.5px] border-dashed border-[#D9A441] text-[#D9A441] rounded-md px-3 py-1.5 flex items-center gap-1.5">
+      <CheckCircle2 className="h-3.5 w-3.5" />
+      <span className="font-mono text-[11px] uppercase tracking-[0.18em]">Authentic</span>
     </div>
   );
 }
 
-/* ──────────────── Syntax Theme ──────────────── */
+/* ──────────────── Empty-state seal ──────────────── */
 
-const neonTheme: Record<string, React.CSSProperties> = {
+function VerificationSeal() {
+  return (
+    <div className="relative w-28 h-28 flex items-center justify-center">
+      <div className="absolute inset-0 rounded-full border border-dashed border-[#D9A441]/30" />
+      <div className="absolute inset-3 rounded-full border border-[#2C2519]" />
+      <ShieldCheck className="h-9 w-9 text-[#D9A441]/70" strokeWidth={1.5} />
+    </div>
+  );
+}
+
+/* ──────────────── Syntax theme (warm) ──────────────── */
+
+const codeTheme: Record<string, React.CSSProperties> = {
   ...atomOneDark,
   'pre[class*="language-"]': { ...atomOneDark['pre[class*="language-"]'], background: "transparent", margin: 0 },
   'code[class*="language-"]': { ...atomOneDark['code[class*="language-"]'], background: "transparent" },
-  comment: { color: "#4b6a9f", fontStyle: "italic" },
-  prolog: { color: "#4b6a9f" },
-  punctuation: { color: "#7dd3fc" },
-  property: { color: "#818cf8" },
-  keyword: { color: "#c084fc" },
-  tag: { color: "#22d3ee" },
-  boolean: { color: "#f472b6" },
-  number: { color: "#f472b6" },
-  constant: { color: "#f472b6" },
-  symbol: { color: "#f472b6" },
-  selector: { color: "#34d399" },
-  "attr-name": { color: "#22d3ee" },
-  string: { color: "#34d399" },
-  char: { color: "#34d399" },
-  builtin: { color: "#38bdf8" },
-  operator: { color: "#7dd3fc" },
-  atrule: { color: "#c084fc" },
-  "attr-value": { color: "#34d399" },
-  function: { color: "#818cf8" },
-  "class-name": { color: "#fbbf24" },
-  regex: { color: "#22d3ee" },
-  variable: { color: "#818cf8" },
+  comment: { color: "#6E675B", fontStyle: "italic" },
+  prolog: { color: "#6E675B" },
+  punctuation: { color: "#9A9183" },
+  property: { color: "#C99A4E" },
+  keyword: { color: "#C99A4E" },
+  tag: { color: "#C99A4E" },
+  boolean: { color: "#C56B4F" },
+  number: { color: "#C56B4F" },
+  constant: { color: "#C56B4F" },
+  symbol: { color: "#C56B4F" },
+  selector: { color: "#9CA36B" },
+  "attr-name": { color: "#C99A4E" },
+  string: { color: "#9CA36B" },
+  char: { color: "#9CA36B" },
+  builtin: { color: "#C99A4E" },
+  operator: { color: "#9A9183" },
+  atrule: { color: "#C99A4E" },
+  "attr-value": { color: "#9CA36B" },
+  function: { color: "#D9A441" },
+  "class-name": { color: "#D9A441" },
+  regex: { color: "#9CA36B" },
+  variable: { color: "#ECE6D8" },
 };
 
 /* ══════════════════════════════════════════════════════════════
@@ -284,19 +253,10 @@ export default function DevVerifyDashboard() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "VERIFIED": return { dot: "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.5)]", text: "text-emerald-400" };
-      case "PENDING": return { dot: "bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.5)]", text: "text-amber-400" };
-      case "FAILED": return { dot: "bg-red-400 shadow-[0_0_6px_rgba(248,113,113,0.5)]", text: "text-red-400" };
-      default: return { dot: "bg-amber-400", text: "text-amber-400" };
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "VERIFIED": return <CheckCircle2 className="h-3 w-3" />;
-      case "PENDING": return <Clock className="h-3 w-3" />;
-      case "FAILED": return <AlertCircle className="h-3 w-3" />;
-      default: return <Clock className="h-3 w-3" />;
+      case "VERIFIED": return { dot: "bg-[#74A36B]", text: "text-[#74A36B]" };
+      case "PENDING": return { dot: "bg-[#C99A4E]", text: "text-[#C99A4E]" };
+      case "FAILED": return { dot: "bg-[#C56B4F]", text: "text-[#C56B4F]" };
+      default: return { dot: "bg-[#C99A4E]", text: "text-[#C99A4E]" };
     }
   };
 
@@ -304,12 +264,9 @@ export default function DevVerifyDashboard() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#040a18] flex items-center justify-center">
-        <div className="relative">
-          <div className="h-12 w-12 rounded-xl bg-[#0a142c]/80 backdrop-blur-xl border border-blue-500/20 flex items-center justify-center">
-            <Loader2 className="h-6 w-6 text-cyan-400 animate-spin" />
-          </div>
-          <div className="absolute -inset-3 rounded-xl border border-cyan-500/10 animate-pulse" />
+      <div className="min-h-screen bg-[#100D0A] flex items-center justify-center">
+        <div className="h-12 w-12 rounded-lg bg-[#1A1611] border border-[#2C2519] flex items-center justify-center">
+          <Loader2 className="h-6 w-6 text-[#D9A441] animate-spin" />
         </div>
       </div>
     );
@@ -320,51 +277,43 @@ export default function DevVerifyDashboard() {
      ══════════════════════════════════════════════════════════════ */
 
   return (
-    <div className="min-h-screen bg-[#040a18] flex flex-col relative overflow-hidden">
-
-      {/* ── Ambient neon blur blobs ── */}
-      <div className="fixed top-[-20%] left-[-10%] w-[600px] h-[600px] bg-blue-600/10 blur-[150px] rounded-full pointer-events-none" />
-      <div className="fixed bottom-[-15%] right-[-5%] w-[500px] h-[500px] bg-indigo-500/10 blur-[150px] rounded-full pointer-events-none" />
-      <div className="fixed top-[30%] right-[20%] w-[300px] h-[300px] bg-cyan-500/5 blur-[120px] rounded-full pointer-events-none" />
+    <div className="min-h-screen bg-[#100D0A] flex flex-col text-[#ECE6D8]">
 
       {/* ── Header ── */}
-      <header className="relative z-20 border-b border-blue-500/15 bg-[#040a18]/80 backdrop-blur-xl sticky top-0 z-50">
-        <div className="max-w-[1680px] mx-auto px-4 sm:px-6 lg:px-8 h-12 flex items-center justify-between">
+      <header className="border-b border-[#2C2519] bg-[#100D0A] sticky top-0 z-50">
+        <div className="max-w-[1680px] mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-lg bg-[#0a142c]/80 backdrop-blur-xl border border-blue-500/25 flex items-center justify-center shadow-[0_0_15px_rgba(59,130,246,0.15)]">
-              <ShieldCheck className="h-4 w-4 text-cyan-400" />
+            <div className="h-8 w-8 rounded-md bg-[#1A1611] border border-[#3A3122] flex items-center justify-center">
+              <ShieldCheck className="h-4 w-4 text-[#D9A441]" />
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-white font-semibold text-sm tracking-wide">DevVerify</span>
-              <span className="text-blue-300/40 text-[10px] font-medium tracking-widest uppercase hidden sm:inline">
+            <div className="flex items-baseline gap-2.5">
+              <span className="text-[#ECE6D8] font-semibold text-sm tracking-[0.02em]">DevVerify</span>
+              <span className="font-mono text-[10px] tracking-[0.22em] uppercase text-[#8C8475] hidden sm:inline">
                 Code Evidence
               </span>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#0a142c]/60 backdrop-blur-xl border border-blue-500/20">
-              <div className={`h-1.5 w-1.5 rounded-full ${verifiedCount > 0 ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.5)]" : "bg-slate-600"}`} />
-              <span className="text-[10px] text-cyan-400/80 font-mono tabular-nums">{verifiedCount}/{claims.length}</span>
+          <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#1A1611] border border-[#2C2519]">
+              <div className={`h-1.5 w-1.5 rounded-full ${verifiedCount > 0 ? "bg-[#74A36B]" : "bg-[#3A3122]"}`} />
+              <span className="font-mono text-[11px] text-[#9A9183] tabular-nums">{verifiedCount}/{claims.length}</span>
             </div>
-            {/* Add Claim Button */}
             <Button
-              variant="outline"
               size="sm"
-              className="border-cyan-500/50 bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 hover:border-cyan-500 shadow-[0_0_15px_rgba(6,182,212,0.2)] transition-all duration-300 gap-1.5 text-[10px] h-7"
+              className="bg-[#D9A441] text-[#1A1611] hover:bg-[#E4B254] border-0 gap-1.5 text-[11px] h-7 font-medium rounded-md"
               onClick={() => setIsAddOpen(true)}
             >
               <Plus className="h-3 w-3" />
-              Add Claim
+              Add claim
             </Button>
-            {/* Reset Button */}
             <Button
               variant="outline"
               size="sm"
-              className="border-blue-500/30 bg-blue-500/5 text-blue-400 hover:bg-blue-500/20 hover:border-blue-500/60 transition-all duration-300 gap-1.5 text-[10px] h-7"
+              className="border-[#3A3122] bg-transparent text-[#9A9183] hover:bg-[#1A1611] hover:text-[#ECE6D8] gap-1.5 text-[11px] h-7 rounded-md"
               onClick={seedAndLoad}
               disabled={isSeeding}
             >
-              {isSeeding ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+              {isSeeding ? <Loader2 className="h-3 w-3 animate-spin" /> : <RotateCcw className="h-3 w-3" />}
               Reset
             </Button>
           </div>
@@ -372,55 +321,51 @@ export default function DevVerifyDashboard() {
       </header>
 
       {/* ── Main ── */}
-      <main className="relative z-10 flex-1 max-w-[1680px] w-full mx-auto p-4 sm:p-6 lg:p-8 overflow-hidden">
+      <main className="flex-1 max-w-[1680px] w-full mx-auto p-4 sm:p-6 lg:p-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-full">
 
           {/* ═══════════════ LEFT COLUMN ═══════════════ */}
-          <div className="lg:col-span-4 xl:col-span-3 flex flex-col gap-3 lg:h-[calc(100vh-7rem)]">
+          <div className="lg:col-span-4 xl:col-span-3 flex flex-col gap-3 lg:h-[calc(100vh-8rem)]">
 
             {/* ── Profile Card ── */}
-            <div className={`flex-none ${GLASS} ${GLASS_INNER} rounded-xl p-5 relative overflow-hidden`}>
-              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent" />
+            <div className={`flex-none ${PANEL} p-5`}>
               <div className="flex items-start gap-3.5">
-                <div className="h-11 w-11 rounded-lg bg-gradient-to-br from-blue-500/25 to-cyan-500/20 border border-blue-400/20 flex items-center justify-center text-cyan-300 font-bold text-sm shrink-0 shadow-[0_0_12px_rgba(59,130,246,0.15)]">
+                <div className="h-11 w-11 rounded-md bg-[#241F16] border border-[#3A3122] flex items-center justify-center text-[#D9A441] font-semibold text-sm shrink-0">
                   {user?.name?.charAt(0) || "S"}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h2 className="text-white font-semibold tracking-wide text-sm truncate">
+                  <h2 className="text-[#ECE6D8] font-semibold text-sm truncate">
                     {user?.name || "Sarthak Arya"}
                   </h2>
-                  <p className="text-slate-400 text-xs mt-0.5">Full-Stack Developer</p>
+                  <p className="text-[#9A9183] text-xs mt-0.5">Full-Stack Developer</p>
                   <div className="flex items-center gap-1.5 mt-2">
-                    <Github className="h-3 w-3 text-blue-300/40" />
-                    <span className="text-blue-300/40 text-[10px] font-mono truncate">
+                    <Github className="h-3 w-3 text-[#6E675B]" />
+                    <span className="text-[#8C8475] text-[10px] font-mono truncate">
                       {user?.email || "sarthak@devverify.io"}
                     </span>
                   </div>
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-blue-500/10">
-                <div className="text-center">
-                  <div className="text-white font-semibold text-base tabular-nums">{claims.length}</div>
-                  <div className="text-[9px] uppercase tracking-[0.15em] text-slate-500 mt-0.5">Claims</div>
+              <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-[#2C2519]">
+                <div>
+                  <div className="text-[#ECE6D8] font-semibold text-base tabular-nums">{claims.length}</div>
+                  <div className={`${LABEL} mt-0.5`}>Claims</div>
                 </div>
-                <div className="text-center">
-                  <div className="text-cyan-400 font-semibold text-base tabular-nums">{verifiedCount}</div>
-                  <div className="text-[9px] uppercase tracking-[0.15em] text-slate-500 mt-0.5">Verified</div>
+                <div>
+                  <div className="text-[#74A36B] font-semibold text-base tabular-nums">{verifiedCount}</div>
+                  <div className={`${LABEL} mt-0.5`}>Verified</div>
                 </div>
-                <div className="text-center">
-                  <div className="text-amber-400 font-semibold text-base tabular-nums">{pendingCount}</div>
-                  <div className="text-[9px] uppercase tracking-[0.15em] text-slate-500 mt-0.5">Pending</div>
+                <div>
+                  <div className="text-[#C99A4E] font-semibold text-base tabular-nums">{pendingCount}</div>
+                  <div className={`${LABEL} mt-0.5`}>Pending</div>
                 </div>
               </div>
             </div>
 
             {/* ── Claims Label ── */}
-            <div className="flex-none flex items-center justify-between px-1">
-              <div className="flex items-center gap-2">
-                <Layers className="h-3.5 w-3.5 text-blue-400/50" />
-                <span className="text-[11px] font-medium text-blue-300/50 tracking-wide">Resume Claims</span>
-              </div>
-              <span className="text-[9px] uppercase tracking-[0.2em] text-blue-300/25">{claims.length}</span>
+            <div className="flex-none flex items-center justify-between px-1 pt-1">
+              <span className={LABEL}>Resume claims</span>
+              <span className="font-mono text-[10px] text-[#6E675B] tabular-nums">{claims.length}</span>
             </div>
 
             {/* ── Claims List ── */}
@@ -441,30 +386,27 @@ export default function DevVerifyDashboard() {
                       >
                         <button
                           onClick={() => setActiveClaimId(claim.id)}
-                          className={`w-full text-left rounded-xl border p-3.5 transition-all duration-150 ${isSelected
-                            ? "bg-gradient-to-r from-blue-500/10 to-transparent border-blue-400/30 border-l-4 border-l-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.08)]"
-                            : "bg-[#0a142c]/30 border-blue-500/10 hover:bg-[#0a142c]/50 hover:border-blue-500/15"
+                          className={`w-full text-left rounded-lg border p-3.5 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D9A441]/50 ${isSelected
+                            ? "bg-[#1F1A12] border-[#3A3122] border-l-2 border-l-[#D9A441]"
+                            : "bg-[#161310] border-[#2C2519] hover:bg-[#1A1611]"
                             }`}
                         >
                           <div className="flex items-start gap-2.5">
-                            <div className={`mt-0.5 h-7 w-7 rounded-lg flex items-center justify-center shrink-0 ${isSelected ? "bg-blue-500/20 shadow-[0_0_10px_rgba(59,130,246,0.15)]" : "bg-blue-500/5"}`}>
-                              <FileCode2 className={`h-3.5 w-3.5 ${isSelected ? "text-blue-400" : "text-blue-300/30"}`} />
-                            </div>
                             <div className="flex-1 min-w-0">
-                              <p className={`text-xs leading-snug line-clamp-2 ${isSelected ? "text-white" : "text-slate-400"}`}>
+                              <p className={`text-xs leading-snug line-clamp-2 ${isSelected ? "text-[#ECE6D8]" : "text-[#9A9183]"}`}>
                                 {claim.bulletText}
                               </p>
                               <div className="flex items-center gap-1.5 mt-2">
-                                <GitBranch className="h-2.5 w-2.5 text-blue-300/25" />
-                                <span className="text-[10px] font-mono text-blue-300/30 truncate max-w-[100px]">{claim.githubRepo}</span>
-                                <span className="text-[10px] font-mono text-blue-300/20 truncate">{claim.filePath}</span>
+                                <GitBranch className="h-2.5 w-2.5 text-[#6E675B]" />
+                                <span className="text-[10px] font-mono text-[#8C8475] truncate max-w-[100px]">{claim.githubRepo}</span>
+                                <span className="text-[10px] font-mono text-[#6E675B] truncate">{claim.filePath}</span>
                               </div>
                               <div className="flex items-center gap-1.5 mt-2">
                                 <div className={`h-1.5 w-1.5 rounded-full ${sc.dot}`} />
-                                <span className={`text-[9px] uppercase tracking-wider ${sc.text}`}>{claim.status}</span>
+                                <span className={`font-mono text-[9px] uppercase tracking-[0.15em] ${sc.text}`}>{claim.status}</span>
                               </div>
                             </div>
-                            <ChevronRight className={`h-3.5 w-3.5 mt-1 shrink-0 ${isSelected ? "text-blue-400/60" : "text-blue-300/15"}`} />
+                            <ChevronRight className={`h-3.5 w-3.5 mt-1 shrink-0 ${isSelected ? "text-[#D9A441]" : "text-[#3A3122]"}`} />
                           </div>
                         </button>
                       </motion.div>
@@ -476,7 +418,7 @@ export default function DevVerifyDashboard() {
           </div>
 
           {/* ═══════════════ RIGHT COLUMN ═══════════════ */}
-          <div className="lg:col-span-8 xl:col-span-9 lg:h-[calc(100vh-7rem)] lg:overflow-y-auto">
+          <div className="lg:col-span-8 xl:col-span-9 lg:h-[calc(100vh-8rem)] lg:overflow-y-auto">
             <AnimatePresence mode="wait">
               {!activeClaim ? (
                 /* ── Empty State ── */
@@ -486,24 +428,18 @@ export default function DevVerifyDashboard() {
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.2 }}
-                  className={`h-full min-h-[70vh] lg:min-h-[calc(100vh-7rem)] ${GLASS} ${GLASS_INNER} rounded-xl flex flex-col items-center justify-center p-8 relative overflow-hidden`}
+                  className={`h-full min-h-[70vh] lg:min-h-[calc(100vh-8rem)] ${PANEL} flex flex-col items-center justify-center p-8`}
                 >
-                  <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent" />
-                  <div className="absolute inset-0 bg-gradient-to-b from-blue-500/[0.03] via-transparent to-cyan-500/[0.03] pointer-events-none" />
-                  <TargetMesh />
-                  <h3 className="text-white font-semibold tracking-wide text-sm mt-6 relative">
-                    Awaiting Target Selection
+                  <VerificationSeal />
+                  <h3 className="text-[#ECE6D8] font-semibold text-sm mt-6">
+                    Select a claim to verify
                   </h3>
-                  <p className="text-slate-400 text-xs mt-2 text-center max-w-xs relative">
-                    Select a resume claim from the sidebar to load its code evidence and verification metrics.
+                  <p className="text-[#9A9183] text-xs mt-2 text-center max-w-xs leading-relaxed">
+                    Choose a resume claim from the left to fetch its code and check whether the evidence holds up.
                   </p>
-                  <div className="flex items-center gap-1.5 mt-4 relative">
-                    <Crosshair className="h-3 w-3 text-cyan-400/50" />
-                    <span className="text-[10px] text-cyan-400/40 font-mono">Click a claim to begin analysis</span>
-                  </div>
                 </motion.div>
               ) : (
-                /* ── Bento Grid ── */
+                /* ── Detail Grid ── */
                 <motion.div
                   key={activeClaim.id}
                   initial={{ opacity: 0 }}
@@ -513,22 +449,23 @@ export default function DevVerifyDashboard() {
                   className="grid grid-cols-1 md:grid-cols-12 gap-4"
                 >
                   {/* ─── Box A: Claim Detail ─── */}
-                  <div className={`md:col-span-12 ${GLASS} ${GLASS_INNER} rounded-xl p-5 sm:p-6 relative overflow-hidden`}>
-                    <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/35 to-transparent" />
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/[0.04] to-transparent pointer-events-none" />
-                    <div className="relative flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                  <div className={`md:col-span-12 ${PANEL} p-5 sm:p-6 relative overflow-hidden`}>
+                    <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#D9A441]" />
+                    <div className="relative flex flex-col sm:flex-row sm:items-start justify-between gap-4 pl-2">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2.5 mb-3">
-                          <div className={`h-1.5 w-1.5 rounded-full ${getStatusColor(activeClaim.status).dot}`} />
-                          <span className={`text-[10px] uppercase tracking-wider font-medium ${getStatusColor(activeClaim.status).text}`}>
-                            {activeClaim.status}
-                          </span>
-                          <span className="text-blue-300/20">·</span>
-                          <span className="text-[10px] font-mono text-blue-300/40">
+                        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 mb-3">
+                          <div className="flex items-center gap-1.5">
+                            <div className={`h-1.5 w-1.5 rounded-full ${getStatusColor(activeClaim.status).dot}`} />
+                            <span className={`font-mono text-[10px] uppercase tracking-[0.18em] ${getStatusColor(activeClaim.status).text}`}>
+                              {activeClaim.status}
+                            </span>
+                          </div>
+                          <span className="text-[#3A3122]">/</span>
+                          <span className="text-[10px] font-mono text-[#8C8475]">
                             <GitBranch className="h-2.5 w-2.5 inline mr-0.5" />{activeClaim.githubRepo}
                           </span>
-                          <span className="text-blue-300/20">·</span>
-                          <span className="text-[10px] font-mono text-blue-300/30">
+                          <span className="text-[#3A3122]">/</span>
+                          <span className="text-[10px] font-mono text-[#6E675B]">
                             <FileCode2 className="h-2.5 w-2.5 inline mr-0.5" />{activeClaim.filePath}
                           </span>
                         </div>
@@ -539,25 +476,25 @@ export default function DevVerifyDashboard() {
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             transition={{ duration: 0.1 }}
-                            className="text-white text-sm leading-relaxed"
+                            className="text-[#ECE6D8] text-[15px] leading-relaxed font-medium"
                           >
                             {activeClaim.bulletText}
                           </motion.p>
                         </AnimatePresence>
                         {activeClaim.analysisResult?.claimMatch && (
-                          <div className={`mt-3 rounded-lg px-3 py-2 text-[11px] leading-relaxed border ${
+                          <div className={`mt-4 rounded-md px-3.5 py-2.5 text-[11px] leading-relaxed border ${
                             activeClaim.analysisResult.claimMatch.skipped
-                              ? "border-slate-500/20 bg-slate-500/5 text-slate-400"
+                              ? "border-[#2C2519] bg-[#14110D] text-[#9A9183]"
                               : activeClaim.analysisResult.claimMatch.matches
-                                ? "border-emerald-500/20 bg-emerald-500/5 text-emerald-300/90"
-                                : "border-rose-500/20 bg-rose-500/5 text-rose-300/90"
+                                ? "border-[#74A36B]/30 bg-[#74A36B]/10 text-[#A9C79F]"
+                                : "border-[#C56B4F]/30 bg-[#C56B4F]/10 text-[#E0A88F]"
                           }`}>
-                            <span className="font-medium uppercase tracking-wider text-[9px] mr-1.5">
+                            <span className="font-mono uppercase tracking-[0.15em] text-[10px] mr-2">
                               {activeClaim.analysisResult.claimMatch.skipped
-                                ? "Claim Match · Skipped"
+                                ? "Claim match · skipped"
                                 : activeClaim.analysisResult.claimMatch.matches
-                                  ? `Claim Match · ${activeClaim.analysisResult.claimMatch.confidence}% confident`
-                                  : `No Match · ${activeClaim.analysisResult.claimMatch.confidence}% confident`}
+                                  ? `Claim match · ${activeClaim.analysisResult.claimMatch.confidence}%`
+                                  : `No match · ${activeClaim.analysisResult.claimMatch.confidence}%`}
                             </span>
                             {activeClaim.analysisResult.claimMatch.reasoning}
                           </div>
@@ -568,64 +505,48 @@ export default function DevVerifyDashboard() {
                           <Button
                             onClick={() => handleVerify(activeClaim.id)}
                             disabled={isVerifying}
-                            className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 shadow-[0_0_20px_rgba(59,130,246,0.25)] gap-1.5 h-8 text-[11px] font-medium rounded-lg"
+                            className="bg-[#D9A441] text-[#1A1611] hover:bg-[#E4B254] border-0 gap-1.5 h-8 text-[11px] font-medium rounded-md"
                           >
                             {isVerifying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-3.5 w-3.5" />}
-                            {isVerifying ? "Verifying..." : activeClaim.status === "FAILED" ? "Retry" : "Verify Claim"}
+                            {isVerifying ? "Verifying…" : activeClaim.status === "FAILED" ? "Retry" : "Verify claim"}
                           </Button>
                         )}
-                        {activeClaim.status === "VERIFIED" && (
-                          <div className="flex items-center gap-1.5 text-emerald-400 text-xs font-medium">
-                            <CheckCircle2 className="h-3.5 w-3.5" />
-                            Verified
-                          </div>
-                        )}
-                        {activeClaim.status === "FAILED" && (
-                          <div className="flex items-center gap-1.5 text-rose-400 text-xs font-medium ml-2">
-                            <XCircle className="h-3.5 w-3.5" />
-                            Failed
-                          </div>
-                        )}
+                        {activeClaim.status === "VERIFIED" && <Stamp />}
                       </div>
                     </div>
                   </div>
 
                   {/* ─── Box B: Progress Ring ─── */}
-                  <div className={`md:col-span-4 ${GLASS} ${GLASS_INNER} rounded-xl p-5 flex flex-col items-center justify-center relative overflow-hidden`}>
-                    <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/20 to-transparent" />
-                    <span className="text-[9px] uppercase tracking-[0.15em] text-cyan-400/50 mb-3">Verification Progress</span>
-                    <NeonRing value={verificationProgress} size={110} strokeWidth={4} />
-                    <div className="flex items-center gap-4 mt-3">
+                  <div className={`md:col-span-4 ${PANEL} p-5 flex flex-col items-center justify-center`}>
+                    <span className={`${LABEL} mb-4`}>Overall progress</span>
+                    <ProgressRing value={verificationProgress} />
+                    <div className="flex items-center gap-4 mt-4">
                       <div className="flex items-center gap-1.5">
-                        <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.4)]" />
-                        <span className="text-[10px] text-slate-400">{verifiedCount} verified</span>
+                        <div className="h-1.5 w-1.5 rounded-full bg-[#74A36B]" />
+                        <span className="font-mono text-[10px] text-[#9A9183]">{verifiedCount} verified</span>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <div className="h-1.5 w-1.5 rounded-full bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.4)]" />
-                        <span className="text-[10px] text-slate-400">{pendingCount} pending</span>
+                        <div className="h-1.5 w-1.5 rounded-full bg-[#C99A4E]" />
+                        <span className="font-mono text-[10px] text-[#9A9183]">{pendingCount} pending</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* ─── Box C: Micro-Metrics ─── */}
-                  <div className={`md:col-span-8 ${GLASS} ${GLASS_INNER} rounded-xl p-5 relative overflow-hidden`}>
-                    <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/20 to-transparent" />
-                    <span className="text-[9px] uppercase tracking-[0.15em] text-cyan-400/50">Code Metrics</span>
+                  {/* ─── Box C: Metrics ─── */}
+                  <div className={`md:col-span-8 ${PANEL} p-5`}>
+                    <span className={LABEL}>Code metrics</span>
                     {activeClaim.analysisResult ? (
-                      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2.5 mt-3">
+                      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2.5 mt-4">
                         {[
-                          { label: "Lines", value: activeClaim.analysisResult.linesOfCode, icon: Hash, size: "text-[10px]" },
-                          { label: "Complexity", value: activeClaim.analysisResult.complexity, icon: Cpu, size: "text-[10px]" },
-                          { label: "Language", value: activeClaim.analysisResult.language, icon: Braces, size: "text-[10px]" },
-                          { label: "Workflow Modules", value: String(activeClaim.analysisResult.metrics.functions), icon: Terminal, size: "text-[8px]" },
-                          { label: "System Integrations", value: String(activeClaim.analysisResult.metrics.imports), icon: GitCommitHorizontal, size: "text-[8px]" },
-                          { label: "Reliability Score", value: activeClaim.analysisResult.metrics.reliabilityScore != null ? `${activeClaim.analysisResult.metrics.reliabilityScore}%` : "—", icon: TestTube2, size: "text-[8px]" },
+                          { label: "Lines", value: activeClaim.analysisResult.linesOfCode },
+                          { label: "Complexity", value: activeClaim.analysisResult.complexity },
+                          { label: "Language", value: activeClaim.analysisResult.language },
+                          { label: "Functions", value: String(activeClaim.analysisResult.metrics.functions) },
+                          { label: "Imports", value: String(activeClaim.analysisResult.metrics.imports) },
+                          { label: "Reliability", value: activeClaim.analysisResult.metrics.reliabilityScore != null ? `${activeClaim.analysisResult.metrics.reliabilityScore}%` : "—" },
                         ].map((m) => (
-                          <div key={m.label} className="flex flex-col gap-1.5 px-2.5 py-2.5 rounded-lg bg-[#040a18]/60 border border-blue-500/10">
-                            <div className="flex items-center gap-1">
-                              <m.icon className="h-2.5 w-2.5 text-cyan-400/40" />
-                              <span className={`${m.size} uppercase tracking-wider text-slate-500`}>{m.label}</span>
-                            </div>
+                          <div key={m.label} className="flex flex-col gap-2 px-3 py-3 rounded-md bg-[#14110D] border border-[#2C2519]">
+                            <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#8C8475] whitespace-nowrap">{m.label}</span>
                             <AnimatePresence mode="wait">
                               <motion.span
                                 key={m.value}
@@ -633,7 +554,7 @@ export default function DevVerifyDashboard() {
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
                                 transition={{ duration: 0.08 }}
-                                className="text-cyan-400 font-semibold text-[11px] tabular-nums"
+                                className="text-[#ECE6D8] font-semibold text-[13px] tabular-nums"
                               >
                                 {m.value}
                               </motion.span>
@@ -642,56 +563,48 @@ export default function DevVerifyDashboard() {
                         ))}
                       </div>
                     ) : (
-                      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2.5 mt-3">
-                        {[
-                          { label: "Lines", size: "text-[10px]" },
-                          { label: "Complexity", size: "text-[10px]" },
-                          { label: "Language", size: "text-[10px]" },
-                          { label: "Workflow Modules", size: "text-[8px]" },
-                          { label: "System Integrations", size: "text-[8px]" },
-                          { label: "Reliability Score", size: "text-[8px]" },
-                        ].map((m) => (
-                          <div key={m.label} className="flex flex-col gap-1.5 px-2.5 py-2.5 rounded-lg bg-[#040a18]/60 border border-blue-500/10">
-                            <span className={`${m.size} uppercase tracking-wider text-slate-700 whitespace-nowrap`}>{m.label}</span>
-                            <div className="h-4 w-10 rounded bg-blue-500/5 animate-pulse" />
+                      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2.5 mt-4">
+                        {["Lines", "Complexity", "Language", "Functions", "Imports", "Reliability"].map((label) => (
+                          <div key={label} className="flex flex-col gap-2 px-3 py-3 rounded-md bg-[#14110D] border border-[#2C2519]">
+                            <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#4A4438] whitespace-nowrap">{label}</span>
+                            <div className="h-4 w-10 rounded bg-[#241F16] animate-pulse" />
                           </div>
                         ))}
                       </div>
                     )}
                   </div>
 
-                  {/* ─── Box D: Code Terminal ─── */}
-                  <div className={`md:col-span-12 ${GLASS} rounded-xl overflow-hidden relative flex flex-col flex-grow`}>
-                    <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/25 to-transparent" />
-                    {/* Terminal header */}
-                    <div className="flex items-center justify-between px-4 h-10 bg-[#0a142c]/80 border-b border-blue-500/15 flex-none">
+                  {/* ─── Box D: Code ─── */}
+                  <div className={`md:col-span-12 ${PANEL} overflow-hidden flex flex-col flex-grow`}>
+                    {/* header */}
+                    <div className="flex items-center justify-between px-4 h-10 bg-[#14110D] border-b border-[#2C2519] flex-none">
                       <div className="flex items-center gap-3">
                         <div className="flex items-center gap-1.5">
-                          <div className="h-[7px] w-[7px] rounded-full bg-red-400/70 shadow-[0_0_4px_rgba(248,113,113,0.3)]" />
-                          <div className="h-[7px] w-[7px] rounded-full bg-amber-400/70 shadow-[0_0_4px_rgba(251,191,36,0.3)]" />
-                          <div className="h-[7px] w-[7px] rounded-full bg-emerald-400/70 shadow-[0_0_4px_rgba(52,211,153,0.3)]" />
+                          <div className="h-[7px] w-[7px] rounded-full bg-[#C56B4F]/60" />
+                          <div className="h-[7px] w-[7px] rounded-full bg-[#C99A4E]/60" />
+                          <div className="h-[7px] w-[7px] rounded-full bg-[#74A36B]/60" />
                         </div>
-                        <span className="text-[11px] font-mono text-slate-400">
-                          <FileCode2 className="h-3 w-3 inline mr-1 text-blue-300/40" />{activeClaim.filePath}
+                        <span className="text-[11px] font-mono text-[#9A9183]">
+                          <FileCode2 className="h-3 w-3 inline mr-1 text-[#6E675B]" />{activeClaim.filePath}
                         </span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <div className={`h-1.5 w-1.5 rounded-full ${getStatusColor(activeClaim.status).dot}`} />
-                        <span className={`text-[9px] uppercase tracking-wider ${getStatusColor(activeClaim.status).text}`}>{activeClaim.status}</span>
+                        <span className={`font-mono text-[9px] uppercase tracking-[0.15em] ${getStatusColor(activeClaim.status).text}`}>{activeClaim.status}</span>
                       </div>
                     </div>
-                    {/* Code Area */}
+                    {/* code */}
                     {activeClaim.analysisResult ? (
-                      <div className="bg-[#040a18] relative flex-grow min-h-0">
+                      <div className="bg-[#14110D] relative flex-grow min-h-0">
                         <ScrollArea className="h-full">
                           <AnimatePresence mode="wait">
                             <motion.div key={activeClaim.id + "-code"} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.1 }}>
                               <SyntaxHighlighter
                                 language={activeClaim.filePath.endsWith(".tsx") ? "tsx" : activeClaim.filePath.endsWith(".ts") ? "typescript" : activeClaim.filePath.endsWith(".prisma") ? "typescript" : "javascript"}
-                                style={neonTheme}
+                                style={codeTheme}
                                 customStyle={{ background: "transparent", margin: 0, padding: "1rem 1.25rem", fontSize: "11px", lineHeight: "1.7", fontFamily: "var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace" }}
                                 showLineNumbers
-                                lineNumberStyle={{ minWidth: "2.5em", paddingRight: "1em", color: "#1e3a5f", userSelect: "none", fontSize: "10px" }}
+                                lineNumberStyle={{ minWidth: "2.5em", paddingRight: "1em", color: "#4A4438", userSelect: "none", fontSize: "10px" }}
                                 wrapLines
                                 lineProps={() => ({ style: { display: "block" } })}
                               >
@@ -702,34 +615,34 @@ export default function DevVerifyDashboard() {
                         </ScrollArea>
                       </div>
                     ) : (
-                      <div className="bg-[#040a18] flex flex-col items-center justify-center py-14 px-8 flex-grow">
-                        <div className="h-12 w-12 rounded-lg bg-[#0a142c]/60 border border-blue-500/15 flex items-center justify-center mb-4 shadow-[0_0_15px_rgba(59,130,246,0.08)]">
-                          <Terminal className="h-6 w-6 text-cyan-400/40" />
+                      <div className="bg-[#14110D] flex flex-col items-center justify-center py-14 px-8 flex-grow">
+                        <div className="h-12 w-12 rounded-md bg-[#1A1611] border border-[#2C2519] flex items-center justify-center mb-4">
+                          <Terminal className="h-6 w-6 text-[#6E675B]" />
                         </div>
-                        <p className="text-white font-medium text-xs">Awaiting Verification</p>
-                        <p className="text-slate-400 text-[11px] mt-1.5 text-center max-w-xs">
-                          Run verification to analyze the code and generate evidence.
+                        <p className="text-[#ECE6D8] font-medium text-xs">Not verified yet</p>
+                        <p className="text-[#9A9183] text-[11px] mt-1.5 text-center max-w-xs leading-relaxed">
+                          Run verification to fetch the file and check it against the claim.
                         </p>
                         <Button
                           onClick={() => handleVerify(activeClaim.id)}
                           disabled={isVerifying}
-                          className="mt-5 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 shadow-[0_0_20px_rgba(59,130,246,0.25)] gap-1.5 h-8 text-[11px] font-medium rounded-lg"
+                          className="mt-5 bg-[#D9A441] text-[#1A1611] hover:bg-[#E4B254] border-0 gap-1.5 h-8 text-[11px] font-medium rounded-md"
                         >
                           {isVerifying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-3.5 w-3.5" />}
-                          {isVerifying ? "Analyzing..." : "Verify Now"}
+                          {isVerifying ? "Analyzing…" : "Verify now"}
                         </Button>
                       </div>
                     )}
-                    {/* Terminal footer */}
-                    <div className="flex items-center justify-between px-4 h-7 bg-[#0a142c]/80 border-t border-blue-500/10 flex-none">
-                      <div className="flex items-center gap-3 text-[9px] font-mono text-blue-300/25">
+                    {/* footer */}
+                    <div className="flex items-center justify-between px-4 h-7 bg-[#14110D] border-t border-[#2C2519] flex-none">
+                      <div className="flex items-center gap-3 font-mono text-[9px] text-[#6E675B]">
                         {activeClaim.analysisResult ? (
                           <><span>{activeClaim.analysisResult.language}</span><span>UTF-8</span><span>{activeClaim.analysisResult.linesOfCode}</span></>
                         ) : (
                           <><span>—</span><span>UTF-8</span></>
                         )}
                       </div>
-                      <span className="text-[9px] font-mono text-blue-300/20">
+                      <span className="font-mono text-[9px] text-[#6E675B]">
                         {activeClaim.analysisResult ? `Verified ${new Date(activeClaim.analysisResult.verifiedAt).toLocaleTimeString()}` : "Not verified"}
                       </span>
                     </div>
@@ -742,15 +655,15 @@ export default function DevVerifyDashboard() {
       </main>
 
       {/* ── Footer ── */}
-      <footer className="relative z-10 border-t border-blue-500/10 bg-[#040a18]/80 backdrop-blur-xl">
+      <footer className="border-t border-[#2C2519] bg-[#100D0A]">
         <div className="max-w-[1680px] mx-auto px-4 sm:px-6 lg:px-8 h-10 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-[10px] text-blue-300/25">
-            <ShieldCheck className="h-3 w-3" />
+          <div className="flex items-center gap-2 font-mono text-[10px] text-[#6E675B]">
+            <ShieldCheck className="h-3 w-3 text-[#8C8475]" />
             <span>DevVerify</span>
-            <span className="text-blue-300/15">·</span>
-            <span>Code Evidence Platform</span>
+            <span className="text-[#3A3122]">·</span>
+            <span>Code evidence platform</span>
           </div>
-          <span className="text-[10px] text-blue-300/15 font-mono">Next.js + Prisma</span>
+          <span className="font-mono text-[10px] text-[#4A4438]">Next.js · Prisma</span>
         </div>
       </footer>
 
@@ -758,66 +671,58 @@ export default function DevVerifyDashboard() {
       <AnimatePresence>
         {isAddOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsAddOpen(false)}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/70"
             />
-            {/* Modal Box */}
             <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
+              initial={{ scale: 0.96, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
+              exit={{ scale: 0.96, opacity: 0 }}
               transition={{ type: "spring", duration: 0.3 }}
-              className={`w-full max-w-md ${GLASS} ${GLASS_INNER} rounded-2xl p-6 relative overflow-hidden shadow-2xl z-10`}
+              className={`w-full max-w-md ${PANEL} p-6 relative z-10`}
             >
-              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent" />
-              <h3 className="text-white font-semibold text-base mb-4 flex items-center gap-2">
-                <Plus className="h-4 w-4 text-cyan-400" />
-                Add New Resume Claim
+              <h3 className="text-[#ECE6D8] font-semibold text-base mb-1 flex items-center gap-2">
+                <Plus className="h-4 w-4 text-[#D9A441]" />
+                Add resume claim
               </h3>
+              <p className="text-[#9A9183] text-xs mb-5">Point a claim at a real file and we&apos;ll check the evidence.</p>
               <form onSubmit={handleCreateClaim} className="space-y-4">
                 <div>
-                  <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-mono mb-1">
-                    Evidence Bullet Text
-                  </label>
+                  <label className={`block ${LABEL} mb-1.5`}>Claim text</label>
                   <textarea
                     required
                     value={newBulletText}
                     onChange={(e) => setNewBulletText(e.target.value)}
-                    placeholder="e.g. Optimized database query performance by 40% using composite indexing and raw SQL queries"
+                    placeholder="e.g. Built a GitHub file-verification API that fetches files and computes metrics"
                     rows={3}
-                    className="w-full rounded-lg border border-blue-500/20 bg-[#040a18]/80 px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400/50"
+                    className="w-full rounded-md border border-[#2C2519] bg-[#14110D] px-3 py-2 text-xs text-[#ECE6D8] placeholder-[#6E675B] focus:outline-none focus:border-[#D9A441]/60"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-mono mb-1">
-                      GitHub Repository
-                    </label>
+                    <label className={`block ${LABEL} mb-1.5`}>GitHub repo</label>
                     <input
                       type="text"
                       required
                       value={newGithubRepo}
                       onChange={(e) => setNewGithubRepo(e.target.value)}
-                      placeholder="e.g. user/repo"
-                      className="w-full rounded-lg border border-blue-500/20 bg-[#040a18]/80 px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400/50"
+                      placeholder="user/repo"
+                      className="w-full rounded-md border border-[#2C2519] bg-[#14110D] px-3 py-2 text-xs text-[#ECE6D8] placeholder-[#6E675B] focus:outline-none focus:border-[#D9A441]/60 font-mono"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] uppercase tracking-wider text-slate-400 font-mono mb-1">
-                      Target File Path
-                    </label>
+                    <label className={`block ${LABEL} mb-1.5`}>File path</label>
                     <input
                       type="text"
                       required
                       value={newFilePath}
                       onChange={(e) => setNewFilePath(e.target.value)}
-                      placeholder="e.g. src/index.ts"
-                      className="w-full rounded-lg border border-blue-500/20 bg-[#040a18]/80 px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400/50"
+                      placeholder="src/index.ts"
+                      className="w-full rounded-md border border-[#2C2519] bg-[#14110D] px-3 py-2 text-xs text-[#ECE6D8] placeholder-[#6E675B] focus:outline-none focus:border-[#D9A441]/60 font-mono"
                     />
                   </div>
                 </div>
@@ -826,21 +731,17 @@ export default function DevVerifyDashboard() {
                     type="button"
                     variant="ghost"
                     onClick={() => setIsAddOpen(false)}
-                    className="text-slate-400 hover:text-white hover:bg-white/5 text-[11px] h-8 px-3"
+                    className="text-[#9A9183] hover:text-[#ECE6D8] hover:bg-[#241F16] text-[11px] h-8 px-3"
                   >
                     Cancel
                   </Button>
                   <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 shadow-[0_0_15px_rgba(59,130,246,0.2)] text-[11px] h-8 px-4 font-medium rounded-lg flex items-center gap-1.5"
+                    className="bg-[#D9A441] text-[#1A1611] hover:bg-[#E4B254] border-0 text-[11px] h-8 px-4 font-medium rounded-md flex items-center gap-1.5"
                   >
-                    {isSubmitting ? (
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                    ) : (
-                      <Plus className="h-3 w-3" />
-                    )}
-                    Add Claim
+                    {isSubmitting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
+                    Add claim
                   </Button>
                 </div>
               </form>
