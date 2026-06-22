@@ -125,6 +125,66 @@ async function fetchFileFromGitHub(
   return { ok: true, content };
 }
 
+const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n));
+
+/**
+ * Computes a REAL composite reliability/maintainability score (0-100) from the
+ * actual file contents. It is a transparent heuristic built from four signals,
+ * each worth up to 25 points:
+ *   1. Documentation   - comment density relative to code lines
+ *   2. Error handling  - presence of try/catch relative to functions
+ *   3. Modularity      - average function length (shorter = more maintainable)
+ *   4. Formatting      - absence of very long lines
+ * Signals that don't apply to a given file (e.g. functions in a JSON config)
+ * fall back to a neutral value instead of unfairly penalising the file.
+ */
+function computeReliability(content: string) {
+  const lines = content.split("\n");
+  const codeLineCount = Math.max(lines.filter((l) => l.trim().length > 0).length, 1);
+
+  const commentLines = lines.filter((l) => /^\s*(\/\/|\/\*|\*|#)/.test(l)).length;
+  const functions = (content.match(/\bfunction\b|=>|\bdef\b|\bfunc\b/g) || []).length;
+  const imports = (content.match(/^\s*(import|from|require|use)\b/gm) || []).length;
+  const tryCatch = (content.match(/\bcatch\b|\bexcept\b/g) || []).length;
+  const longLines = lines.filter((l) => l.length > 120).length;
+
+  // 1. Documentation (0-25): healthy comment density is ~15% of code lines.
+  const docScore = clamp((commentLines / codeLineCount) / 0.15, 0, 1) * 25;
+
+  // 2. Error handling (0-25): reward try/catch relative to function count.
+  let errScore: number;
+  if (functions === 0) errScore = 15; // neutral for non-function files
+  else errScore = Math.max(tryCatch > 0 ? 12 : 0, clamp(tryCatch / functions, 0, 1) * 25);
+
+  // 3. Modularity (0-25): shorter average function length scores higher.
+  let sizeScore: number;
+  if (functions === 0) sizeScore = 18; // neutral
+  else {
+    const avgLen = codeLineCount / functions;
+    if (avgLen <= 15) sizeScore = 25;
+    else if (avgLen >= 60) sizeScore = 5;
+    else sizeScore = 25 - ((avgLen - 15) / 45) * 20;
+  }
+
+  // 4. Formatting (0-25): too many >120-char lines drags the score down.
+  const fmtScore = Math.max(0, 1 - (longLines / codeLineCount) / 0.1) * 25;
+
+  const reliabilityScore = clamp(Math.round(docScore + errScore + sizeScore + fmtScore), 0, 100);
+
+  return {
+    functions,
+    imports,
+    errorHandling: tryCatch,
+    reliabilityScore,
+    breakdown: {
+      documentation: Math.round(docScore),
+      errorHandling: Math.round(errScore),
+      modularity: Math.round(sizeScore),
+      formatting: Math.round(fmtScore),
+    },
+  };
+}
+
 function buildAnalysis(filePath: string, content: string) {
   const lineCount = content.split("\n").length;
   const snippet = content.length > MAX_SNIPPET_CHARS
@@ -137,11 +197,7 @@ function buildAnalysis(filePath: string, content: string) {
     language: detectLanguage(filePath),
     codeSnippet: snippet,
     verifiedAt: new Date().toISOString(),
-    metrics: {
-      functions: (content.match(/\bfunction\b|=>|\bdef\b|\bfunc\b/g) || []).length,
-      imports: (content.match(/^\s*(import|from|require|use)\b/gm) || []).length,
-      errorHandling: (content.match(/\btry\b|\bcatch\b|\bexcept\b|Error|err\b/g) || []).length,
-    },
+    metrics: computeReliability(content),
   };
 }
 

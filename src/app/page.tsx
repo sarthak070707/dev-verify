@@ -39,7 +39,13 @@ interface AnalysisResult {
   language: string;
   codeSnippet: string;
   verifiedAt: string;
-  metrics: { functions: number; imports: number; errorHandling: number };
+  metrics: {
+    functions: number;
+    imports: number;
+    errorHandling: number;
+    reliabilityScore?: number;
+    breakdown?: { documentation: number; errorHandling: number; modularity: number; formatting: number };
+  };
 }
 
 interface Claim {
@@ -587,7 +593,7 @@ export default function DevVerifyDashboard() {
                           { label: "Language", value: activeClaim.analysisResult.language, icon: Braces, size: "text-[10px]" },
                           { label: "Workflow Modules", value: String(activeClaim.analysisResult.metrics.functions), icon: Terminal, size: "text-[8px]" },
                           { label: "System Integrations", value: String(activeClaim.analysisResult.metrics.imports), icon: GitCommitHorizontal, size: "text-[8px]" },
-                          { label: "Reliability Score", value: activeClaim.analysisResult.metrics.errorHandling > 2 ? "87%" : activeClaim.analysisResult.metrics.errorHandling > 0 ? "62%" : "24%", icon: TestTube2, size: "text-[8px]" },
+                          { label: "Reliability Score", value: activeClaim.analysisResult.metrics.reliabilityScore != null ? `${activeClaim.analysisResult.metrics.reliabilityScore}%` : "—", icon: TestTube2, size: "text-[8px]" },
                         ].map((m) => (
                           <div key={m.label} className="flex flex-col gap-1.5 px-2.5 py-2.5 rounded-lg bg-[#040a18]/60 border border-blue-500/10">
                             <div className="flex items-center gap-1">
