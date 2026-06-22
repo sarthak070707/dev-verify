@@ -11,7 +11,7 @@ import {
   Loader2,
   CheckCircle2,
   Zap,
-  Github,
+  Linkedin,
   ChevronRight,
   Plus,
   Terminal,
@@ -338,12 +338,17 @@ export default function DevVerifyDashboard() {
                     {user?.name || "Sarthak Arya"}
                   </h2>
                   <p className="text-[#9A9183] text-xs mt-0.5">Full-Stack Developer</p>
-                  <div className="flex items-center gap-1.5 mt-2">
-                    <Github className="h-3 w-3 text-[#6E675B]" />
-                    <span className="text-[#8C8475] text-[10px] font-mono truncate">
-                      {user?.email || "sarthak@devverify.io"}
+                  <a
+                    href="https://www.linkedin.com/in/sarthak-arya-059920303/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 mt-2 rounded-md border border-[#2C2519] bg-[#161310] px-2.5 py-1 hover:bg-[#1F1A12] hover:border-[#3A3122] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D9A441]/50"
+                  >
+                    <Linkedin className="h-3 w-3 text-[#D9A441]" />
+                    <span className="text-[10px] text-[#9A9183]">
+                      Built by <span className="text-[#D9A441] font-medium">Sarthak Arya</span>
                     </span>
-                  </div>
+                  </a>
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-[#2C2519]">
