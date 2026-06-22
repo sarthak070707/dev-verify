@@ -206,7 +206,7 @@ function buildAnalysis(filePath: string, content: string) {
 // models like 2.5-flash here unless you raise maxOutputTokens well above the
 // thinking budget, or they can return empty output.) Swap this one string to
 // change models.
-const MATCH_MODEL = "gemini-2.0-flash";
+const MATCH_MODEL = "gemini-2.0-flash-lite";
 
 type ClaimMatch = { matches: boolean; confidence: number; reasoning: string; skipped: boolean };
 
