@@ -202,65 +202,64 @@ function buildAnalysis(filePath: string, content: string) {
 }
 
 // Cheapest current model — plenty capable for a yes/no code-vs-claim judgment.
-// Fast, low-cost, non-thinking model on the free tier. (Avoid "thinking"
-// models like 2.5-flash here unless you raise maxOutputTokens well above the
-// thinking budget, or they can return empty output.) Swap this one string to
-// change models.
-const MATCH_MODEL = "gemini-2.0-flash-lite";
+// Fast, free (no credit card) model on Groq. Swap this one string to change
+// models — see console.groq.com/docs/models for the current list.
+const MATCH_MODEL = "llama-3.3-70b-versatile";
 
 type ClaimMatch = { matches: boolean; confidence: number; reasoning: string; skipped: boolean };
 
 /**
- * Uses Google's Gemini to judge whether the fetched code actually implements
- * the resume claim. Deliberately strict: a keyword appearing in a comment is
- * not a match. If no GEMINI_API_KEY is configured (or the call fails), it
- * degrades gracefully to "existence-only" verification instead of breaking.
+ * Uses Groq (OpenAI-compatible API) to judge whether the fetched code actually
+ * implements the resume claim. Deliberately strict: a keyword appearing in a
+ * comment is not a match. If no GROQ_API_KEY is configured (or the call fails),
+ * it degrades gracefully to "existence-only" verification instead of breaking.
  */
 async function matchClaimToCode(bulletText: string, filePath: string, content: string): Promise<ClaimMatch> {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
     return {
       matches: true,
       confidence: 0,
-      reasoning: "AI claim-matching is not configured (no GEMINI_API_KEY set); verified that the file exists only.",
+      reasoning: "AI claim-matching is not configured (no GROQ_API_KEY set); verified that the file exists only.",
       skipped: true,
     };
   }
 
   const codeForReview = content.length > 8000 ? content.slice(0, 8000) + "\n/* ...truncated... */" : content;
 
-  const instructions =
+  const system =
     "You are a strict technical reviewer for a resume-verification tool. " +
     "You are given a resume claim and the actual source code the candidate cited as evidence. " +
     "Decide whether the code substantively implements what the claim describes. " +
     "Be skeptical: a file merely existing, or a keyword merely appearing in a comment or string, is NOT enough. " +
     "Respond with ONLY a JSON object in exactly this shape: " +
-    '{"matches": boolean, "confidence": number from 0 to 100, "reasoning": string of one or two sentences}.\n\n' +
+    '{"matches": boolean, "confidence": number from 0 to 100, "reasoning": string of one or two sentences}.';
+
+  const userMsg =
     `Resume claim:\n"${bulletText}"\n\nFile path: ${filePath}\n\nSource code:\n\`\`\`\n${codeForReview}\n\`\`\``;
 
   try {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${MATCH_MODEL}:generateContent`,
-      {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "x-goog-api-key": apiKey,
-        },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: instructions }] }],
-          generationConfig: {
-            responseMimeType: "application/json",
-            maxOutputTokens: 1024,
-            temperature: 0,
-          },
-        }),
-      }
-    );
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: MATCH_MODEL,
+        messages: [
+          { role: "system", content: system },
+          { role: "user", content: userMsg },
+        ],
+        response_format: { type: "json_object" },
+        max_tokens: 1024,
+        temperature: 0,
+      }),
+    });
 
     if (!res.ok) {
       const detail = await res.text().catch(() => "");
-      console.error(`Gemini claim-match failed: HTTP ${res.status} ${detail.slice(0, 300)}`);
+      console.error(`Groq claim-match failed: HTTP ${res.status} ${detail.slice(0, 300)}`);
       return {
         matches: true,
         confidence: 0,
@@ -270,13 +269,10 @@ async function matchClaimToCode(bulletText: string, filePath: string, content: s
     }
 
     const data = await res.json();
-    const text: string = (data?.candidates?.[0]?.content?.parts || [])
-      .map((p: { text?: string }) => p.text || "")
-      .join("")
-      .trim();
+    const text: string = (data?.choices?.[0]?.message?.content || "").trim();
 
     if (!text) {
-      console.error("Gemini claim-match returned empty text:", JSON.stringify(data).slice(0, 300));
+      console.error("Groq claim-match returned empty content:", JSON.stringify(data).slice(0, 300));
       return {
         matches: true,
         confidence: 0,
@@ -293,7 +289,7 @@ async function matchClaimToCode(bulletText: string, filePath: string, content: s
       skipped: false,
     };
   } catch (err) {
-    console.error("Gemini claim-match error:", err);
+    console.error("Groq claim-match error:", err);
     return {
       matches: true,
       confidence: 0,
