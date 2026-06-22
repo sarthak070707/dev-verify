@@ -11,6 +11,7 @@ import {
   FileCode2,
   Loader2,
   CheckCircle2,
+  XCircle,
   Clock,
   AlertCircle,
   Terminal,
@@ -46,6 +47,7 @@ interface AnalysisResult {
     reliabilityScore?: number;
     breakdown?: { documentation: number; errorHandling: number; modularity: number; formatting: number };
   };
+  claimMatch?: { matches: boolean; confidence: number; reasoning: string; skipped: boolean };
 }
 
 interface Claim {
@@ -542,22 +544,46 @@ export default function DevVerifyDashboard() {
                             {activeClaim.bulletText}
                           </motion.p>
                         </AnimatePresence>
+                        {activeClaim.analysisResult?.claimMatch && (
+                          <div className={`mt-3 rounded-lg px-3 py-2 text-[11px] leading-relaxed border ${
+                            activeClaim.analysisResult.claimMatch.skipped
+                              ? "border-slate-500/20 bg-slate-500/5 text-slate-400"
+                              : activeClaim.analysisResult.claimMatch.matches
+                                ? "border-emerald-500/20 bg-emerald-500/5 text-emerald-300/90"
+                                : "border-rose-500/20 bg-rose-500/5 text-rose-300/90"
+                          }`}>
+                            <span className="font-medium uppercase tracking-wider text-[9px] mr-1.5">
+                              {activeClaim.analysisResult.claimMatch.skipped
+                                ? "Claim Match · Skipped"
+                                : activeClaim.analysisResult.claimMatch.matches
+                                  ? `Claim Match · ${activeClaim.analysisResult.claimMatch.confidence}% confident`
+                                  : `No Match · ${activeClaim.analysisResult.claimMatch.confidence}% confident`}
+                            </span>
+                            {activeClaim.analysisResult.claimMatch.reasoning}
+                          </div>
+                        )}
                       </div>
                       <div className="shrink-0">
-                        {activeClaim.status === "PENDING" && (
+                        {(activeClaim.status === "PENDING" || activeClaim.status === "FAILED") && (
                           <Button
                             onClick={() => handleVerify(activeClaim.id)}
                             disabled={isVerifying}
                             className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 shadow-[0_0_20px_rgba(59,130,246,0.25)] gap-1.5 h-8 text-[11px] font-medium rounded-lg"
                           >
                             {isVerifying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-3.5 w-3.5" />}
-                            {isVerifying ? "Verifying..." : "Verify Claim"}
+                            {isVerifying ? "Verifying..." : activeClaim.status === "FAILED" ? "Retry" : "Verify Claim"}
                           </Button>
                         )}
                         {activeClaim.status === "VERIFIED" && (
                           <div className="flex items-center gap-1.5 text-emerald-400 text-xs font-medium">
                             <CheckCircle2 className="h-3.5 w-3.5" />
                             Verified
+                          </div>
+                        )}
+                        {activeClaim.status === "FAILED" && (
+                          <div className="flex items-center gap-1.5 text-rose-400 text-xs font-medium ml-2">
+                            <XCircle className="h-3.5 w-3.5" />
+                            Failed
                           </div>
                         )}
                       </div>

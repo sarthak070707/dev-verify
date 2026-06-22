@@ -201,6 +201,105 @@ function buildAnalysis(filePath: string, content: string) {
   };
 }
 
+// Cheapest current model — plenty capable for a yes/no code-vs-claim judgment.
+// Fast, low-cost model with a generous free tier. You can swap this for a
+// newer flash model (e.g. "gemini-3.5-flash") by changing this one string.
+const MATCH_MODEL = "gemini-2.5-flash";
+
+type ClaimMatch = { matches: boolean; confidence: number; reasoning: string; skipped: boolean };
+
+/**
+ * Uses Google's Gemini to judge whether the fetched code actually implements
+ * the resume claim. Deliberately strict: a keyword appearing in a comment is
+ * not a match. If no GEMINI_API_KEY is configured (or the call fails), it
+ * degrades gracefully to "existence-only" verification instead of breaking.
+ */
+async function matchClaimToCode(bulletText: string, filePath: string, content: string): Promise<ClaimMatch> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    return {
+      matches: true,
+      confidence: 0,
+      reasoning: "AI claim-matching is not configured (no GEMINI_API_KEY set); verified that the file exists only.",
+      skipped: true,
+    };
+  }
+
+  const codeForReview = content.length > 8000 ? content.slice(0, 8000) + "\n/* ...truncated... */" : content;
+
+  const instructions =
+    "You are a strict technical reviewer for a resume-verification tool. " +
+    "You are given a resume claim and the actual source code the candidate cited as evidence. " +
+    "Decide whether the code substantively implements what the claim describes. " +
+    "Be skeptical: a file merely existing, or a keyword merely appearing in a comment or string, is NOT enough. " +
+    "Respond with ONLY a JSON object in exactly this shape: " +
+    '{"matches": boolean, "confidence": number from 0 to 100, "reasoning": string of one or two sentences}.\n\n' +
+    `Resume claim:\n"${bulletText}"\n\nFile path: ${filePath}\n\nSource code:\n\`\`\`\n${codeForReview}\n\`\`\``;
+
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${MATCH_MODEL}:generateContent`,
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-goog-api-key": apiKey,
+        },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: instructions }] }],
+          generationConfig: {
+            responseMimeType: "application/json",
+            maxOutputTokens: 400,
+            temperature: 0,
+          },
+        }),
+      }
+    );
+
+    if (!res.ok) {
+      return {
+        matches: true,
+        confidence: 0,
+        reasoning: `Claim-matching unavailable (AI service returned ${res.status}); verified file existence only.`,
+        skipped: true,
+      };
+    }
+
+    const data = await res.json();
+    const text: string = (data?.candidates?.[0]?.content?.parts || [])
+      .map((p: { text?: string }) => p.text || "")
+      .join("")
+      .trim();
+
+    const parsed = JSON.parse(text.replace(/```json|```/g, "").trim());
+    return {
+      matches: Boolean(parsed.matches),
+      confidence: clamp(Number(parsed.confidence) || 0, 0, 100),
+      reasoning: String(parsed.reasoning || "").slice(0, 500),
+      skipped: false,
+    };
+  } catch {
+    return {
+      matches: true,
+      confidence: 0,
+      reasoning: "Claim-matching could not be completed; verified file existence only.",
+      skipped: true,
+    };
+  }
+}
+
+const CLAIM_SELECT = {
+  id: true,
+  userId: true,
+  bulletText: true,
+  githubRepo: true,
+  filePath: true,
+  status: true,
+  analysisResult: true,
+  createdAt: true,
+  user: { select: { id: true, name: true, email: true } },
+} as const;
+
 export async function POST(request: NextRequest) {
   let claimId: string | undefined;
   try {
@@ -218,6 +317,7 @@ export async function POST(request: NextRequest) {
         status: true,
         filePath: true,
         githubRepo: true, // <-- now actually used
+        bulletText: true, // <-- the resume claim to match against the code
         user: { select: { githubToken: true } },
       },
     });
@@ -231,12 +331,13 @@ export async function POST(request: NextRequest) {
 
     const parsed = parseRepo(claim.githubRepo);
     if (!parsed) {
-      await db.resumeClaim.update({
+      const failed = await db.resumeClaim.update({
         where: { id: claimId },
         data: { status: "FAILED", analysisResult: { error: `Invalid repository reference: "${claim.githubRepo}"` } },
+        select: CLAIM_SELECT,
       });
       return NextResponse.json(
-        { error: `Invalid repository reference: "${claim.githubRepo}"` },
+        { error: `Invalid repository reference: "${claim.githubRepo}"`, claim: failed },
         { status: 422 }
       );
     }
@@ -248,29 +349,24 @@ export async function POST(request: NextRequest) {
 
     if (!result.ok) {
       // Record the failure honestly instead of faking a VERIFIED result.
-      await db.resumeClaim.update({
+      const failed = await db.resumeClaim.update({
         where: { id: claimId },
         data: { status: "FAILED", analysisResult: { error: result.reason } },
+        select: CLAIM_SELECT,
       });
-      return NextResponse.json({ error: result.reason }, { status: result.status || 502 });
+      return NextResponse.json({ error: result.reason, claim: failed }, { status: result.status || 502 });
     }
 
     const analysisResult = buildAnalysis(claim.filePath, result.content);
 
+    // Compare the actual code against the resume claim.
+    const claimMatch = await matchClaimToCode(claim.bulletText, claim.filePath, result.content);
+    const finalStatus = claimMatch.matches ? "VERIFIED" : "FAILED";
+
     const updatedClaim = await db.resumeClaim.update({
       where: { id: claimId },
-      data: { status: "VERIFIED", analysisResult },
-      select: {
-        id: true,
-        userId: true,
-        bulletText: true,
-        githubRepo: true,
-        filePath: true,
-        status: true,
-        analysisResult: true,
-        createdAt: true,
-        user: { select: { id: true, name: true, email: true } },
-      },
+      data: { status: finalStatus, analysisResult: { ...analysisResult, claimMatch } },
+      select: CLAIM_SELECT,
     });
 
     return NextResponse.json({ claim: updatedClaim });
