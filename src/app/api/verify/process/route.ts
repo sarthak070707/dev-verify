@@ -1,219 +1,158 @@
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
-const MOCK_CODE_SNIPPETS: Record<string, string> = {
-  default: `import { Router } from 'express';
-import { authenticate } from '@/middleware/auth';
-import { validateSchema } from '@/utils/validator';
+/**
+ * Parse a stored githubRepo value into { owner, repo }.
+ * Accepts:
+ *   - "owner/repo"
+ *   - "https://github.com/owner/repo"
+ *   - "https://github.com/owner/repo.git"
+ *   - "git@github.com:owner/repo.git"
+ * Returns null if it can't be parsed.
+ */
+function parseRepo(input: string): { owner: string; repo: string } | null {
+  if (!input) return null;
+  let s = input.trim();
 
-const router = Router();
+  // Strip protocol + host variants
+  s = s
+    .replace(/^https?:\/\/(www\.)?github\.com\//i, "")
+    .replace(/^git@github\.com:/i, "")
+    .replace(/\.git$/i, "")
+    .replace(/\/+$/g, "");
 
-router.post('/api/data', authenticate, async (req, res) => {
-  const { body, headers } = req;
-  const schema = validateSchema(body);
+  const parts = s.split("/").filter(Boolean);
+  if (parts.length < 2) return null;
+  return { owner: parts[0], repo: parts[1] };
+}
 
-  if (!schema.valid) {
-    return res.status(400).json({ error: schema.message });
+/**
+ * A GitHub token is only attached if it looks like a real one.
+ * This avoids sending obvious placeholders (e.g. seed/demo tokens),
+ * which would make GitHub reject every request with 401.
+ */
+function isPlausibleToken(token?: string | null): token is string {
+  if (!token) return false;
+  return /^(ghp_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{40,})$/.test(token.trim());
+}
+
+function detectLanguage(filePath: string): string {
+  if (filePath.endsWith(".tsx")) return "TypeScript React";
+  if (filePath.endsWith(".ts")) return "TypeScript";
+  if (filePath.endsWith(".jsx")) return "JavaScript React";
+  if (filePath.endsWith(".js") || filePath.endsWith(".mjs")) return "JavaScript";
+  if (filePath.endsWith(".prisma")) return "Prisma Schema";
+  if (filePath.endsWith(".py")) return "Python";
+  if (filePath.endsWith(".go")) return "Go";
+  if (filePath.endsWith(".rs")) return "Rust";
+  if (filePath.endsWith(".java")) return "Java";
+  if (filePath.endsWith(".json")) return "JSON";
+  if (filePath.endsWith(".css")) return "CSS";
+  return "Plain Text";
+}
+
+const MAX_SNIPPET_CHARS = 20_000; // keep the UI/highlighter responsive on big files
+
+async function fetchFileFromGitHub(
+  owner: string,
+  repo: string,
+  filePath: string,
+  token?: string | null
+): Promise<{ ok: true; content: string } | { ok: false; status: number; reason: string }> {
+  const cleanPath = filePath.replace(/^\/+/, "");
+  const url = `https://api.github.com/repos/${owner}/${repo}/contents/${cleanPath
+    .split("/")
+    .map(encodeURIComponent)
+    .join("/")}`;
+
+  const headers: Record<string, string> = {
+    Accept: "application/vnd.github.v3+json",
+    // GitHub requires a User-Agent on all API requests.
+    "User-Agent": "DevVerify",
+  };
+  if (isPlausibleToken(token)) headers.Authorization = `Bearer ${token.trim()}`;
+
+  let res: Response;
+  try {
+    res = await fetch(url, { headers, cache: "no-store" });
+  } catch {
+    return { ok: false, status: 0, reason: "Could not reach GitHub. Check your network connection." };
   }
 
-  const result = await processData(body, headers.authorization);
-  return res.status(200).json({ data: result });
-});
-
-router.get('/api/health', (_, res) => {
-  res.status(200).json({ status: 'operational' });
-});
-
-export default router;`,
-  "api-route": `import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { z } from 'zod';
-
-const schema = z.object({
-  userId: z.string().min(1),
-  action: z.enum(['create', 'read', 'update', 'delete']),
-  payload: z.record(z.unknown()).optional(),
-});
-
-export async function POST(request: NextRequest) {
-  const body = await request.json();
-  const parsed = schema.safeParse(body);
-
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: 'Validation failed', details: parsed.error.flatten() },
-      { status: 400 }
-    );
+  if (res.status === 404) {
+    return { ok: false, status: 404, reason: `File not found: ${owner}/${repo}/${cleanPath}. Check the repo name, file path, and that the repo is public (or provide a token).` };
   }
-
-  const { userId, action, payload } = parsed.data;
-  const user = await db.user.findUnique({ where: { id: userId } });
-
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (res.status === 401) {
+    return { ok: false, status: 401, reason: "GitHub rejected the token. The stored githubToken is invalid or expired." };
   }
-
-  switch (action) {
-    case 'create':
-      const record = await db.record.create({ data: payload as any });
-      return NextResponse.json({ record }, { status: 201 });
-    case 'read':
-      const records = await db.record.findMany({ where: { userId } });
-      return NextResponse.json({ records });
-    default:
-      return NextResponse.json({ error: 'Not implemented' }, { status: 501 });
-  }
-}`,
-  "react-component": `"use client";
-
-import { useState, useCallback, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-
-interface DataTableProps<T> {
-  data: T[];
-  columns: ColumnDef<T>[];
-  onRowClick?: (row: T) => void;
-  pageSize?: number;
-}
-
-export function DataTable<T extends Record<string, unknown>>({
-  data,
-  columns,
-  onRowClick,
-  pageSize = 10,
-}: DataTableProps<T>) {
-  const [page, setPage] = useState(0);
-  const [sortKey, setSortKey] = useState<string | null>(null);
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
-
-  const sorted = useCallback(() => {
-    if (!sortKey) return data;
-    return [...data].sort((a, b) => {
-      const av = a[sortKey], bv = b[sortKey];
-      const cmp = av < bv ? -1 : av > bv ? 1 : 0;
-      return sortDir === "asc" ? cmp : -cmp;
-    });
-  }, [data, sortKey, sortDir]);
-
-  const paginated = sorted().slice(page * pageSize, (page + 1) * pageSize);
-
-  return (
-    <div className="w-full overflow-auto">
-      <table className="w-full text-sm">
-        <thead>
-          {columns.map((col) => (
-            <th key={col.key} onClick={() => toggleSort(col.key)}>
-              {col.label}
-            </th>
-          ))}
-        </thead>
-        <AnimatePresence>
-          {paginated.map((row, i) => (
-            <motion.tr
-              key={i}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              onClick={() => onRowClick?.(row)}
-            />
-          ))}
-        </AnimatePresence>
-      </table>
-    </div>
-  );
-}`,
-  "database-schema": `generator client {
-  provider = "prisma-client-js"
-}
-
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String
-  avatar    String?
-  role      Role     @default(USER)
-  posts     Post[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Post {
-  id        String   @id @default(cuid())
-  title     String
-  content   String?
-  published Boolean  @default(false)
-  authorId  String
-  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  tags      Tag[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Tag {
-  id    String @id @default(cuid())
-  name  String @unique
-  posts Post[]
-}`,
-  "websocket-handler": `import { Server as SocketServer } from 'socket.io';
-import { verifyToken } from '@/lib/auth';
-
-export function setupWebSocket(io: SocketServer) {
-  io.use(async (socket, next) => {
-    const token = socket.handshake.auth.token;
-    try {
-      const user = await verifyToken(token);
-      socket.data.user = user;
-      next();
-    } catch {
-      next(new Error('Authentication failed'));
+  if (res.status === 403) {
+    const remaining = res.headers.get("x-ratelimit-remaining");
+    if (remaining === "0") {
+      return { ok: false, status: 403, reason: "GitHub API rate limit exceeded. Add a personal access token to raise the limit." };
     }
-  });
+    return { ok: false, status: 403, reason: "Access forbidden. The repo may be private — add a token with repo access." };
+  }
+  if (!res.ok) {
+    return { ok: false, status: res.status, reason: `GitHub returned an unexpected status (${res.status}).` };
+  }
 
-  io.on('connection', (socket) => {
-    const { user } = socket.data;
-    console.log(\`User \${user.name} connected\`);
+  const data = await res.json();
 
-    socket.join(\`user:\${user.id}\`);
+  if (Array.isArray(data)) {
+    return { ok: false, status: 422, reason: "The path points to a directory, not a file. Specify a file path." };
+  }
+  if (data.type !== "file") {
+    return { ok: false, status: 422, reason: `Expected a file but got "${data.type}".` };
+  }
 
-    socket.on('message', async (payload) => {
-      const { recipientId, content } = payload;
-      io.to(\`user:\${recipientId}\`).emit('message', {
-        from: user.id,
-        content,
-        timestamp: Date.now(),
-      });
-    });
+  // Files <= 1MB come back base64-encoded inline. Larger files have empty
+  // content and must be pulled from download_url.
+  let content = "";
+  if (data.content && data.encoding === "base64") {
+    content = Buffer.from(data.content, "base64").toString("utf-8");
+  } else if (data.download_url) {
+    try {
+      const raw = await fetch(data.download_url, { headers: { "User-Agent": "DevVerify" }, cache: "no-store" });
+      if (!raw.ok) return { ok: false, status: raw.status, reason: "Failed to download the file contents." };
+      content = await raw.text();
+    } catch {
+      return { ok: false, status: 0, reason: "Failed to download the file contents." };
+    }
+  } else {
+    return { ok: false, status: 422, reason: "File has no readable content." };
+  }
 
-    socket.on('disconnect', () => {
-      console.log(\`User \${user.name} disconnected\`);
-    });
-  });
-}`,
-};
+  return { ok: true, content };
+}
 
-function getSnippetForPath(filePath: string): string {
-  if (filePath.includes("api") || filePath.includes("route")) return MOCK_CODE_SNIPPETS["api-route"];
-  if (filePath.includes("component") || filePath.includes(".tsx")) return MOCK_CODE_SNIPPETS["react-component"];
-  if (filePath.includes("schema") || filePath.includes(".prisma")) return MOCK_CODE_SNIPPETS["database-schema"];
-  if (filePath.includes("socket") || filePath.includes("ws")) return MOCK_CODE_SNIPPETS["websocket-handler"];
-  return MOCK_CODE_SNIPPETS["default"];
+function buildAnalysis(filePath: string, content: string) {
+  const lineCount = content.split("\n").length;
+  const snippet = content.length > MAX_SNIPPET_CHARS
+    ? content.slice(0, MAX_SNIPPET_CHARS) + "\n\n/* ...truncated for display... */"
+    : content;
+
+  return {
+    linesOfCode: `${lineCount} lines`,
+    complexity: lineCount > 200 ? "Advanced" : lineCount > 60 ? "Intermediate" : "Basic",
+    language: detectLanguage(filePath),
+    codeSnippet: snippet,
+    verifiedAt: new Date().toISOString(),
+    metrics: {
+      functions: (content.match(/\bfunction\b|=>|\bdef\b|\bfunc\b/g) || []).length,
+      imports: (content.match(/^\s*(import|from|require|use)\b/gm) || []).length,
+      errorHandling: (content.match(/\btry\b|\bcatch\b|\bexcept\b|Error|err\b/g) || []).length,
+    },
+  };
 }
 
 export async function POST(request: NextRequest) {
+  let claimId: string | undefined;
   try {
     const body = await request.json();
-    const { claimId } = body;
+    claimId = body.claimId;
 
     if (!claimId) {
-      return NextResponse.json(
-        { error: "Missing required field: claimId" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Missing required field: claimId" }, { status: 400 });
     }
 
     const claim = await db.resumeClaim.findUnique({
@@ -222,51 +161,49 @@ export async function POST(request: NextRequest) {
         id: true,
         status: true,
         filePath: true,
+        githubRepo: true, // <-- now actually used
+        user: { select: { githubToken: true } },
       },
     });
 
     if (!claim) {
-      return NextResponse.json(
-        { error: "Claim not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Claim not found" }, { status: 404 });
     }
-
     if (claim.status === "VERIFIED") {
+      return NextResponse.json({ error: "Claim is already verified" }, { status: 409 });
+    }
+
+    const parsed = parseRepo(claim.githubRepo);
+    if (!parsed) {
+      await db.resumeClaim.update({
+        where: { id: claimId },
+        data: { status: "FAILED", analysisResult: { error: `Invalid repository reference: "${claim.githubRepo}"` } },
+      });
       return NextResponse.json(
-        { error: "Claim is already verified" },
-        { status: 409 }
+        { error: `Invalid repository reference: "${claim.githubRepo}"` },
+        { status: 422 }
       );
     }
 
-    const codeSnippet = getSnippetForPath(claim.filePath);
-    const linesOfCode = codeSnippet.split("\n").length;
+    // Prefer the user's own token; otherwise fall back to a shared token
+    // stored as the GITHUB_TOKEN environment variable (e.g. set in Vercel).
+    const token = claim.user?.githubToken || process.env.GITHUB_TOKEN;
+    const result = await fetchFileFromGitHub(parsed.owner, parsed.repo, claim.filePath, token);
 
-    const analysisResult = {
-      linesOfCode: `${linesOfCode} lines`,
-      complexity: linesOfCode > 40 ? "Advanced" : linesOfCode > 20 ? "Intermediate" : "Basic",
-      language: claim.filePath.endsWith(".tsx")
-        ? "TypeScript React"
-        : claim.filePath.endsWith(".ts")
-          ? "TypeScript"
-          : claim.filePath.endsWith(".prisma")
-            ? "Prisma Schema"
-            : "JavaScript",
-      codeSnippet,
-      verifiedAt: new Date().toISOString(),
-      metrics: {
-        functions: (codeSnippet.match(/function|const.*=.*\(|=>/g) || []).length,
-        imports: (codeSnippet.match(/^import\s/gm) || []).length,
-        errorHandling: (codeSnippet.match(/try|catch|error|Error/g) || []).length,
-      },
-    };
+    if (!result.ok) {
+      // Record the failure honestly instead of faking a VERIFIED result.
+      await db.resumeClaim.update({
+        where: { id: claimId },
+        data: { status: "FAILED", analysisResult: { error: result.reason } },
+      });
+      return NextResponse.json({ error: result.reason }, { status: result.status || 502 });
+    }
+
+    const analysisResult = buildAnalysis(claim.filePath, result.content);
 
     const updatedClaim = await db.resumeClaim.update({
       where: { id: claimId },
-      data: {
-        status: "VERIFIED",
-        analysisResult,
-      },
+      data: { status: "VERIFIED", analysisResult },
       select: {
         id: true,
         userId: true,
@@ -276,22 +213,21 @@ export async function POST(request: NextRequest) {
         status: true,
         analysisResult: true,
         createdAt: true,
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
+        user: { select: { id: true, name: true, email: true } },
       },
     });
 
     return NextResponse.json({ claim: updatedClaim });
   } catch (error) {
     console.error("Error processing verification:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    if (claimId) {
+      try {
+        await db.resumeClaim.update({
+          where: { id: claimId },
+          data: { status: "FAILED", analysisResult: { error: "Internal server error during verification." } },
+        });
+      } catch { /* ignore secondary failure */ }
+    }
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
