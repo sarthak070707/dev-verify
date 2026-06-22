@@ -202,9 +202,11 @@ function buildAnalysis(filePath: string, content: string) {
 }
 
 // Cheapest current model — plenty capable for a yes/no code-vs-claim judgment.
-// Fast, low-cost model with a generous free tier. You can swap this for a
-// newer flash model (e.g. "gemini-3.5-flash") by changing this one string.
-const MATCH_MODEL = "gemini-2.5-flash";
+// Fast, low-cost, non-thinking model on the free tier. (Avoid "thinking"
+// models like 2.5-flash here unless you raise maxOutputTokens well above the
+// thinking budget, or they can return empty output.) Swap this one string to
+// change models.
+const MATCH_MODEL = "gemini-2.0-flash";
 
 type ClaimMatch = { matches: boolean; confidence: number; reasoning: string; skipped: boolean };
 
@@ -249,7 +251,7 @@ async function matchClaimToCode(bulletText: string, filePath: string, content: s
           contents: [{ parts: [{ text: instructions }] }],
           generationConfig: {
             responseMimeType: "application/json",
-            maxOutputTokens: 400,
+            maxOutputTokens: 1024,
             temperature: 0,
           },
         }),
@@ -257,6 +259,8 @@ async function matchClaimToCode(bulletText: string, filePath: string, content: s
     );
 
     if (!res.ok) {
+      const detail = await res.text().catch(() => "");
+      console.error(`Gemini claim-match failed: HTTP ${res.status} ${detail.slice(0, 300)}`);
       return {
         matches: true,
         confidence: 0,
@@ -271,6 +275,16 @@ async function matchClaimToCode(bulletText: string, filePath: string, content: s
       .join("")
       .trim();
 
+    if (!text) {
+      console.error("Gemini claim-match returned empty text:", JSON.stringify(data).slice(0, 300));
+      return {
+        matches: true,
+        confidence: 0,
+        reasoning: "Claim-matching returned no result; verified file existence only.",
+        skipped: true,
+      };
+    }
+
     const parsed = JSON.parse(text.replace(/```json|```/g, "").trim());
     return {
       matches: Boolean(parsed.matches),
@@ -278,7 +292,8 @@ async function matchClaimToCode(bulletText: string, filePath: string, content: s
       reasoning: String(parsed.reasoning || "").slice(0, 500),
       skipped: false,
     };
-  } catch {
+  } catch (err) {
+    console.error("Gemini claim-match error:", err);
     return {
       matches: true,
       confidence: 0,
